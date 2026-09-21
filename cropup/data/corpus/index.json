@@ -1,0 +1,1 @@
+{"built_at": "2026-09-21T16:02:52+00:00", "card_count": 515, "cards_file": "cards.jsonl", "digest": "41d95c0a167a4e7a3eb0840bccf526642f33b81443216ec0e1026ccb91190c83", "dim": 384, "format": 1, "model_id": "sentence-transformers/all-MiniLM-L6-v2", "onnx_file": "onnx/model_qint8_avx512.onnx", "vectors_file": "index.npy"}

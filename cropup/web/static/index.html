@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+
+<!-- The page holds the farmer's own words and the coordinates of their field.
+     Nothing on it may execute code this repo did not ship or pin, so the policy
+     is an allowlist, not a denylist: no inline script at all (there is not one
+     attribute handler left in this file), no eval, and exactly two external
+     origins, each named for one reason.
+       script-src / style-src  cdnjs, for the pinned Leaflet below and nothing else
+       img-src                 cdnjs for Leaflet's own sprite, arcgisonline for
+                               the tiles, data: for the inline favicon
+       connect-src 'self'      fetch() and the SSE stream never leave this app
+     frame-ancestors cannot be delivered by <meta>; that one needs a response
+     header from web/server.py. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data: https://cdnjs.cloudflare.com https://server.arcgisonline.com; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+
+<title>CropUp</title>
+<meta name="description" content="Crop understanding grounded in Earth observation. Every number carries the instrument that produced it; anything not measured is named as missing.">
+
+<!-- Leaflet from CDN (SPEC 9), pinned by Subresource Integrity. `integrity`
+     without `crossorigin="anonymous"` is a no-op on a cross-origin request, so
+     both attributes are required and both are here. If cdnjs is blocked, or
+     serves one byte that is not the 1.9.4 build these digests name, the browser
+     drops the file and this page never runs it.
+
+     There is deliberately no onerror= handler: an inline attribute is inline
+     script, and the CSP above forbids inline script precisely so that a
+     compromised CDN cannot get one. app.js detects the outcome instead, by
+     looking for window.L and probing whether leaflet.css actually applied --
+     a check that fires identically for a blocked CDN, a failed integrity match
+     and a corrupted file. When it fails, /static/map-fallback.js draws the same
+     geometry from the same /api/geo/field response, to scale, with no network
+     at all. Nothing on this page needs the CDN to stay honest. -->
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+      integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw=="
+      crossorigin="anonymous" referrerpolicy="no-referrer">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"
+        integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzWQzxuSg4DiQUCpauz/EWjgk5TYQqX/kvn9pG1NpYfqg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<link rel="stylesheet" href="/static/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f6b46'/%3E%3Cpath d='M16 25V12m0 0c0-3.5-2.6-6-6-6 0 3.4 2.6 6 6 6Zm0 0c0-3.5 2.6-6 6-6 0 3.4-2.6 6-6 6Z' stroke='%23eaf3ec' stroke-width='2.2' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+<script src="/static/map-fallback.js" defer></script>
+<script src="/static/app.js" defer></script>
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to the main panels</a>
+
+<header class="topbar">
+  <div class="topbar__row">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="26" height="26"><rect width="32" height="32" rx="7" fill="currentColor"/><path d="M16 25V12m0 0c0-3.5-2.6-6-6-6 0 3.4 2.6 6 6 6Zm0 0c0-3.5 2.6-6 6-6 0 3.4-2.6 6-6 6Z" stroke="#eaf3ec" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>
+      </span>
+      <span class="brand__text">
+        <strong>CropUp</strong>
+        <small id="app-version">loading&hellip;</small>
+      </span>
+    </div>
+    <div class="topbar__meta">
+      <span class="sessionchip" id="session-chip" title="This browser's session. The slot frame lives here.">no session</span>
+      <button type="button" class="btn btn--ghost btn--sm" id="btn-reset" title="Forget the slots and open a fresh session">Reset</button>
+    </div>
+  </div>
+
+  <!-- SPEC 9: the persistent capability strip. Fed by GET /api/capabilities. -->
+  <div class="capstrip" id="capstrip" aria-live="polite">
+    <button type="button" class="capstrip__toggle" id="capstrip-toggle" aria-expanded="false" aria-controls="capstrip-detail">
+      <span class="capstrip__dot" id="capstrip-dot" aria-hidden="true"></span>
+      <span class="capstrip__summary" id="capstrip-summary">checking what is working&hellip;</span>
+      <span class="capstrip__chev" aria-hidden="true">&#9662;</span>
+    </button>
+    <div class="capstrip__chips" id="capstrip-chips"></div>
+  </div>
+  <div class="capdetail" id="capstrip-detail" hidden>
+    <div class="capdetail__grid">
+      <section>
+        <h2>What a farmer loses right now</h2>
+        <ul id="cap-lost" class="plainlist"><li class="muted">nothing reported</li></ul>
+      </section>
+      <section>
+        <h2>Not tested yet</h2>
+        <p class="muted small">Coverage cliffs are only answerable at a specific point. Confirm a field and these become real answers.</p>
+        <ul id="cap-unknown" class="plainlist"></ul>
+      </section>
+    </div>
+    <h2>Every capability</h2>
+    <ul id="cap-all" class="caplist"></ul>
+    <p class="muted small" id="cap-stamp"></p>
+  </div>
+</header>
+
+<main id="main" class="layout">
+
+  <!-- ============ LEFT: the two panels over one slot bag ============ -->
+  <section class="panel panel--talk" aria-label="Ask and Form">
+    <div class="tabs" role="tablist" aria-label="Two views of one slot frame">
+      <button type="button" role="tab" id="tab-ask" class="tab is-active" aria-selected="true" aria-controls="view-ask">Ask</button>
+      <button type="button" role="tab" id="tab-form" class="tab" aria-selected="false" aria-controls="view-form">Form</button>
+      <span class="tabs__note">two views of one slot frame &mdash; switching keeps everything</span>
+    </div>
+
+    <!-- ---------- ASK ---------- -->
+    <div class="view" id="view-ask" role="tabpanel" aria-labelledby="tab-ask">
+      <div class="transcript" id="transcript" aria-live="polite" aria-relevant="additions"></div>
+      <form class="composer" id="composer" autocomplete="off">
+        <label class="visually-hidden" for="composer-input">Your question</label>
+        <textarea id="composer-input" rows="1" placeholder="Ask in plain English &mdash; &ldquo;how is my maize in Arusha doing this week?&rdquo;" maxlength="1000"></textarea>
+        <button type="submit" class="btn btn--primary" id="composer-send">Send</button>
+      </form>
+      <p class="composer__note">A message never starts a measurement. Earth Engine runs only after you confirm the field (SPEC&nbsp;4.4).</p>
+    </div>
+
+    <!-- ---------- FORM ---------- -->
+    <div class="view" id="view-form" role="tabpanel" aria-labelledby="tab-form" hidden>
+      <p class="view__lede">Everything you set here locks the slot: the classifier may suggest, but it will not overwrite you.</p>
+
+      <div class="field">
+        <label for="form-intent">What do you want to know?</label>
+        <select id="form-intent"></select>
+        <p class="hint" id="form-intent-hint"></p>
+      </div>
+
+      <div class="field">
+        <label for="form-crop">Crop</label>
+        <div class="combo">
+          <input type="text" id="form-crop" placeholder="maize, mahindi, muhogo&hellip;" role="combobox" aria-expanded="false" aria-controls="form-crop-results" aria-autocomplete="list">
+          <button type="button" class="btn btn--ghost btn--sm" data-clear-slot="crop">Clear</button>
+        </div>
+        <ul class="results" id="form-crop-results" role="listbox" hidden></ul>
+      </div>
+
+      <div class="field">
+        <label for="form-place">Location</label>
+        <div class="combo">
+          <input type="text" id="form-place" placeholder="Arusha, Hai, Moshi&hellip;" role="combobox" aria-expanded="false" aria-controls="form-place-results" aria-autocomplete="list">
+          <button type="button" class="btn btn--ghost btn--sm" data-clear-slot="location">Clear</button>
+        </div>
+        <ul class="results" id="form-place-results" role="listbox" hidden></ul>
+        <div class="row">
+          <button type="button" class="btn btn--ghost btn--sm" id="btn-gps">Use my phone's GPS</button>
+          <span class="hint" id="gps-note">or drop a pin on the map &rarr;</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="form-timeframe">Timeframe <span class="muted">(optional)</span></label>
+        <div class="combo">
+          <input type="text" id="form-timeframe" placeholder="this week, last month, 2026-08-01&hellip;">
+          <button type="button" class="btn btn--ghost btn--sm" data-clear-slot="timeframe">Clear</button>
+        </div>
+        <p class="hint">Press Enter to apply.</p>
+      </div>
+
+      <div class="field">
+        <label for="form-radius">Field radius</label>
+        <div class="row row--radius">
+          <input type="range" id="form-radius" min="5" max="1000" step="5" value="15">
+          <output id="form-radius-out" class="mono">15 m</output>
+          <button type="button" class="btn btn--ghost btn--sm" id="btn-radius-apply">Apply</button>
+        </div>
+        <p class="hint">This is the buffer radius that goes into <code>ee.Geometry.Point(&hellip;).buffer(r)</code>. Some legs read a much wider footprint &mdash; the map says which.</p>
+      </div>
+    </div>
+
+    <!-- ---------- THE ONE SLOT FRAME (under both views) ---------- -->
+    <div class="slotframe" id="slotframe">
+      <div class="slotframe__head">
+        <h2>The slot frame</h2>
+        <span class="muted small">one bag, both views</span>
+      </div>
+      <ul class="slots" id="slots"></ul>
+      <div class="slotframe__events" id="slot-events" hidden></div>
+    </div>
+  </section>
+
+  <!-- ============ RIGHT: the field, the gate, the run ============ -->
+  <aside class="panel panel--field" aria-label="The field and the Earth Engine gate">
+
+    <h2 class="panel__title">The field</h2>
+    <div class="mapwrap">
+      <div id="map" class="map" role="application" aria-label="Field location map"></div>
+      <div class="mapbanner" id="map-banner" hidden></div>
+    </div>
+    <div class="maptools">
+      <button type="button" class="btn btn--ghost btn--sm" id="btn-map-mode">Plan view</button>
+      <button type="button" class="btn btn--ghost btn--sm" id="btn-map-centre">Recentre</button>
+      <span class="hint" id="map-hint">Click the map to place the field.</span>
+    </div>
+
+    <div class="request" id="request-block">
+      <h3>What Earth Engine would receive</h3>
+      <div id="request-rows" class="reqrows"></div>
+    </div>
+
+    <details class="foot" id="footprints-block">
+      <summary>Footprints <span class="muted small" id="footprints-count"></span></summary>
+      <ul class="footlist" id="footprints"></ul>
+    </details>
+
+    <!-- SPEC 4.4: the gate, as a deliberate act -->
+    <section class="gate" id="gate" aria-live="polite">
+      <h3>The gate</h3>
+      <div id="gate-body"></div>
+    </section>
+
+    <section class="runpanel" id="runpanel" hidden aria-live="polite">
+      <h3>Run <span class="muted small" id="run-clock"></span></h3>
+      <ul class="legs" id="legs"></ul>
+      <p class="muted small" id="run-note"></p>
+    </section>
+  </aside>
+</main>
+
+<footer class="footer">
+  <p>Every measured number above is hoverable and carries its instrument, date and resolution; the request parameters beside the map carry their own reason instead. Anything not measured is named, never guessed. There is no generative model in this system: answers are deterministic templates over measured facts plus verbatim cited snippets.</p>
+</footer>
+
+<div class="toasts" id="toasts" aria-live="assertive"></div>
+
+</body>
+</html>

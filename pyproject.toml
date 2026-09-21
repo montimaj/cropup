@@ -1,0 +1,27 @@
+# CropUp project metadata and test configuration.
+#
+# There is deliberately no [build-system] table. CropUp is run from the repo
+# root -- `python -m uvicorn cropup.web.server:app`, `python tools/...` -- and is
+# never pip-installed, so nothing here needs a build backend or a network fetch.
+# Adding one would also change how `cropup` is imported today. Runtime versions
+# live in requirements.txt, which is pinned to the verified .venv; duplicating
+# them here would let the two drift.
+
+[project]
+name = "cropup"
+version = "0.1.0"                  # keep in step with cropup.__version__
+description = "Crop understanding grounded in Earth observation, where every number carries its instrument."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.12"         # verified on 3.12.11, x86_64 under Rosetta
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]              # SPEC section 10; the repo root holds no tests
+# The package is imported from the repo root, not installed, so put the root on
+# sys.path. This is what a root conftest.py would otherwise exist to do.
+pythonpath = ["."]
+addopts = "-ra --strict-config"
+markers = [
+    "ee: needs live Earth Engine credentials and network; deselect with -m 'not ee'",
+    "slow: takes more than a second (model load, corpus rebuild)",
+]

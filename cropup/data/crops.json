@@ -1,0 +1,1596 @@
+{
+ "crops": [
+  {
+   "name": "Alfalfa",
+   "key": "alfalfa",
+   "aliases": [
+    "alfalfa",
+    "alfalfas"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Amaranth",
+   "key": "amaranth",
+   "aliases": [
+    "amaranth",
+    "amaranths",
+    "mchicha wa kienyeji"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Apple",
+   "key": "apple",
+   "aliases": [
+    "apple",
+    "apples"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Apricot",
+   "key": "apricot",
+   "aliases": [
+    "apricot",
+    "apricots"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Asparagus",
+   "key": "asparagus",
+   "aliases": [
+    "asparagus"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Avocado",
+   "key": "avocado",
+   "aliases": [
+    "avocado",
+    "avocados",
+    "maparachichi",
+    "parachichi"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Bamboo",
+   "key": "bamboo",
+   "aliases": [
+    "bamboo",
+    "bamboos"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Banana",
+   "key": "banana",
+   "aliases": [
+    "banana",
+    "bananas",
+    "mgomba",
+    "ndizi"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Barley",
+   "key": "barley",
+   "aliases": [
+    "barleies",
+    "barley",
+    "barleys",
+    "shayiri"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Beans",
+   "key": "beans",
+   "aliases": [
+    "beans",
+    "common bean",
+    "maharage",
+    "maharagwe"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Black Pepper",
+   "key": "black pepper",
+   "aliases": [
+    "black pepper",
+    "black peppers",
+    "pilipili manga"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Blueberry",
+   "key": "blueberry",
+   "aliases": [
+    "blueberries",
+    "blueberry",
+    "blueberrys"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Breadfruit",
+   "key": "breadfruit",
+   "aliases": [
+    "breadfruit",
+    "breadfruits"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Cabbage",
+   "key": "cabbage",
+   "aliases": [
+    "cabbage",
+    "cabbages",
+    "kabichi"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Cardamom",
+   "key": "cardamom",
+   "aliases": [
+    "cardamom",
+    "cardamoms"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Carrot",
+   "key": "carrot",
+   "aliases": [
+    "carrot",
+    "carrots",
+    "karoti"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Cashew",
+   "key": "cashew",
+   "aliases": [
+    "cashew",
+    "cashew nut",
+    "cashews",
+    "korosho",
+    "mkorosho"
+   ],
+   "in_suitability": false,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Cassava",
+   "key": "cassava",
+   "aliases": [
+    "cassava",
+    "cassavas",
+    "manioc",
+    "mihogo",
+    "muhogo",
+    "tapioca"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Castor Bean",
+   "key": "castor bean",
+   "aliases": [
+    "castor bean",
+    "castor beans"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Cherry",
+   "key": "cherry",
+   "aliases": [
+    "cherries",
+    "cherry",
+    "cherrys"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Chickpea",
+   "key": "chickpea",
+   "aliases": [
+    "chickpea",
+    "chickpeas",
+    "dengu za kihindi"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Chinese Cabbage",
+   "key": "chinese cabbage",
+   "aliases": [
+    "bok choy",
+    "chainizi",
+    "chinese",
+    "chinese cabbage",
+    "chinese cabbages",
+    "pak choi"
+   ],
+   "in_suitability": false,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Cinnamon",
+   "key": "cinnamon",
+   "aliases": [
+    "cinnamon",
+    "cinnamons"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Citrus",
+   "key": "citrus",
+   "aliases": [
+    "citrus"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Clove",
+   "key": "clove",
+   "aliases": [
+    "clove",
+    "cloves"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Clover",
+   "key": "clover",
+   "aliases": [
+    "clover",
+    "clovers"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Cocoa",
+   "key": "cocoa",
+   "aliases": [
+    "cocoa",
+    "cocoas"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Coconut",
+   "key": "coconut",
+   "aliases": [
+    "coconut",
+    "coconuts",
+    "minazi",
+    "nazi"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Coffee",
+   "key": "coffee",
+   "aliases": [
+    "coffee",
+    "coffees",
+    "kahawa"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Coffee Robusta",
+   "key": "coffee robusta",
+   "aliases": [
+    "coffee robusta",
+    "coffee robustas"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Cotton",
+   "key": "cotton",
+   "aliases": [
+    "cotton",
+    "cottons",
+    "pamba"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Cowpea",
+   "key": "cowpea",
+   "aliases": [
+    "cowpea",
+    "cowpeas",
+    "kunde"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Cucumber",
+   "key": "cucumber",
+   "aliases": [
+    "cucumber",
+    "cucumbers",
+    "matango",
+    "tango"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Date Palm",
+   "key": "date palm",
+   "aliases": [
+    "date palm",
+    "date palms"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Dragonfruit",
+   "key": "dragonfruit",
+   "aliases": [
+    "dragonfruit",
+    "dragonfruits"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Durian",
+   "key": "durian",
+   "aliases": [
+    "durian",
+    "durians"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Durum Wheat",
+   "key": "durum wheat",
+   "aliases": [
+    "durum wheat",
+    "durum wheats"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Eggplant",
+   "key": "eggplant",
+   "aliases": [
+    "aubergine",
+    "biringanya",
+    "brinjal",
+    "eggplant",
+    "eggplants"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Enset",
+   "key": "enset",
+   "aliases": [
+    "enset",
+    "ensets"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Faba Bean",
+   "key": "faba bean",
+   "aliases": [
+    "faba bean",
+    "faba beans"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Fig",
+   "key": "fig",
+   "aliases": [
+    "fig",
+    "figs"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Finger Millet",
+   "key": "finger millet",
+   "aliases": [
+    "finger millet",
+    "finger millets",
+    "ulezi",
+    "wimbi"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Flax",
+   "key": "flax",
+   "aliases": [
+    "flax",
+    "flaxs"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Fonio",
+   "key": "fonio",
+   "aliases": [
+    "fonio",
+    "fonios"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Foxtail Millet",
+   "key": "foxtail millet",
+   "aliases": [
+    "foxtail millet",
+    "foxtail millets"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Garlic",
+   "key": "garlic",
+   "aliases": [
+    "garlic",
+    "garlics",
+    "kitunguu saumu",
+    "kitunguu swaumu"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Ginger",
+   "key": "ginger",
+   "aliases": [
+    "ginger",
+    "gingers",
+    "tangawizi"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Grape",
+   "key": "grape",
+   "aliases": [
+    "grape",
+    "grapes"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Grapefruit",
+   "key": "grapefruit",
+   "aliases": [
+    "grapefruit",
+    "grapefruits"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Groundnut",
+   "key": "groundnut",
+   "aliases": [
+    "groundnut",
+    "groundnuts",
+    "karanga",
+    "njugu",
+    "peanut",
+    "peanuts"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Guava",
+   "key": "guava",
+   "aliases": [
+    "guava",
+    "guavas",
+    "mapera",
+    "pera"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Hemp",
+   "key": "hemp",
+   "aliases": [
+    "hemp",
+    "hemps"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Hops",
+   "key": "hops",
+   "aliases": [
+    "hops"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Jackfruit",
+   "key": "jackfruit",
+   "aliases": [
+    "jackfruit",
+    "jackfruits"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Jatropha",
+   "key": "jatropha",
+   "aliases": [
+    "jatropha",
+    "jatrophas"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Jute",
+   "key": "jute",
+   "aliases": [
+    "jute",
+    "jutes"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Kenaf",
+   "key": "kenaf",
+   "aliases": [
+    "kenaf",
+    "kenafs"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Khat",
+   "key": "khat",
+   "aliases": [
+    "khat",
+    "khats"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Kiwi",
+   "key": "kiwi",
+   "aliases": [
+    "kiwi",
+    "kiwis"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Lemon",
+   "key": "lemon",
+   "aliases": [
+    "lemon",
+    "lemons",
+    "limao",
+    "ndimu"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Lentil",
+   "key": "lentil",
+   "aliases": [
+    "dengu",
+    "lentil",
+    "lentils"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Lettuce",
+   "key": "lettuce",
+   "aliases": [
+    "lettuce",
+    "lettuces"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Longan",
+   "key": "longan",
+   "aliases": [
+    "longan",
+    "longans"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Lupin",
+   "key": "lupin",
+   "aliases": [
+    "lupin",
+    "lupins"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Lychee",
+   "key": "lychee",
+   "aliases": [
+    "lychee",
+    "lychees"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Maize",
+   "key": "maize",
+   "aliases": [
+    "corn",
+    "mahindi",
+    "maize",
+    "maizes",
+    "mhindi"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Mandarin",
+   "key": "mandarin",
+   "aliases": [
+    "mandarin",
+    "mandarins"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Mango",
+   "key": "mango",
+   "aliases": [
+    "embe",
+    "mango",
+    "mangos",
+    "miembe"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Mangosteen",
+   "key": "mangosteen",
+   "aliases": [
+    "mangosteen",
+    "mangosteens"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Melon",
+   "key": "melon",
+   "aliases": [
+    "melon",
+    "melons"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Millet",
+   "key": "millet",
+   "aliases": [
+    "millet",
+    "millets",
+    "mtama mdogo"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Moringa",
+   "key": "moringa",
+   "aliases": [
+    "drumstick tree",
+    "mlonge",
+    "moringa",
+    "moringas",
+    "mrongo"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Mung Bean",
+   "key": "mung bean",
+   "aliases": [
+    "choroko",
+    "mung bean",
+    "mung beans"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Naranjilla",
+   "key": "naranjilla",
+   "aliases": [
+    "naranjilla",
+    "naranjillas"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Neem",
+   "key": "neem",
+   "aliases": [
+    "neem",
+    "neems"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Nutmeg",
+   "key": "nutmeg",
+   "aliases": [
+    "nutmeg",
+    "nutmegs"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Oats",
+   "key": "oats",
+   "aliases": [
+    "oats"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Oil Palm",
+   "key": "oil palm",
+   "aliases": [
+    "oil palm",
+    "oil palms"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Okra",
+   "key": "okra",
+   "aliases": [
+    "bamia",
+    "okra",
+    "okras"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Olive",
+   "key": "olive",
+   "aliases": [
+    "olive",
+    "olives"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Onion",
+   "key": "onion",
+   "aliases": [
+    "kitunguu",
+    "onion",
+    "onions",
+    "vitunguu"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Orange",
+   "key": "orange",
+   "aliases": [
+    "chungwa",
+    "machungwa",
+    "orange",
+    "oranges"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Papaya",
+   "key": "papaya",
+   "aliases": [
+    "mapapai",
+    "papai",
+    "papaya",
+    "papayas",
+    "pawpaw"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Passion Fruit",
+   "key": "passion fruit",
+   "aliases": [
+    "pasheni",
+    "passion",
+    "passion fruit",
+    "passion fruits"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Passionfruit",
+   "key": "passionfruit",
+   "aliases": [
+    "passionfruit",
+    "passionfruits"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Pea",
+   "key": "pea",
+   "aliases": [
+    "njegere",
+    "pea",
+    "peas"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Peach",
+   "key": "peach",
+   "aliases": [
+    "peach",
+    "peachs"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Pear",
+   "key": "pear",
+   "aliases": [
+    "pear",
+    "pears"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Pearl Millet",
+   "key": "pearl millet",
+   "aliases": [
+    "pearl millet",
+    "pearl millets",
+    "uwele"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Pepper",
+   "key": "pepper",
+   "aliases": [
+    "bell pepper",
+    "capsicum",
+    "hoho",
+    "pepper",
+    "peppers",
+    "pilipili hoho"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Pigeon Pea",
+   "key": "pigeon pea",
+   "aliases": [
+    "mbaazi",
+    "pigeon pea",
+    "pigeon peas"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Pineapple",
+   "key": "pineapple",
+   "aliases": [
+    "mananasi",
+    "nanasi",
+    "pineapple",
+    "pineapples"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Plantain",
+   "key": "plantain",
+   "aliases": [
+    "ndizi za kupika",
+    "plantain",
+    "plantains"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Plum",
+   "key": "plum",
+   "aliases": [
+    "plum",
+    "plums"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Poppy",
+   "key": "poppy",
+   "aliases": [
+    "poppies",
+    "poppy",
+    "poppys"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Potato",
+   "key": "potato",
+   "aliases": [
+    "irish potato",
+    "potato",
+    "potatos",
+    "viazi",
+    "viazi mviringo"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Pumpkin",
+   "key": "pumpkin",
+   "aliases": [
+    "boga",
+    "maboga",
+    "pumpkin",
+    "pumpkins"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Quinoa",
+   "key": "quinoa",
+   "aliases": [
+    "quinoa",
+    "quinoas"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Radish",
+   "key": "radish",
+   "aliases": [
+    "radish",
+    "radishs"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Rambutan",
+   "key": "rambutan",
+   "aliases": [
+    "rambutan",
+    "rambutans"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Rapeseed",
+   "key": "rapeseed",
+   "aliases": [
+    "rapeseed",
+    "rapeseeds"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Raspberry",
+   "key": "raspberry",
+   "aliases": [
+    "raspberries",
+    "raspberry",
+    "raspberrys"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Rice",
+   "key": "rice",
+   "aliases": [
+    "mchele",
+    "mpunga",
+    "rice",
+    "rices",
+    "wali"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Rubber",
+   "key": "rubber",
+   "aliases": [
+    "rubber",
+    "rubbers"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Rye",
+   "key": "rye",
+   "aliases": [
+    "rye",
+    "ryes"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Safflower",
+   "key": "safflower",
+   "aliases": [
+    "safflower",
+    "safflowers"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Saffron",
+   "key": "saffron",
+   "aliases": [
+    "saffron",
+    "saffrons"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Sesame",
+   "key": "sesame",
+   "aliases": [
+    "sesame",
+    "sesames",
+    "sim sim",
+    "simsim",
+    "ufuta"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Sisal",
+   "key": "sisal",
+   "aliases": [
+    "mkonge",
+    "sisal",
+    "sisals"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Sorghum",
+   "key": "sorghum",
+   "aliases": [
+    "mtama",
+    "sorghum",
+    "sorghums"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Soursop",
+   "key": "soursop",
+   "aliases": [
+    "soursop",
+    "soursops"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Soybean",
+   "key": "soybean",
+   "aliases": [
+    "soy",
+    "soya",
+    "soybean",
+    "soybeans"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Spinach",
+   "key": "spinach",
+   "aliases": [
+    "mchicha",
+    "spinach",
+    "spinachs"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Squash",
+   "key": "squash",
+   "aliases": [
+    "squash",
+    "squashs"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Starfruit",
+   "key": "starfruit",
+   "aliases": [
+    "starfruit",
+    "starfruits"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Strawberry",
+   "key": "strawberry",
+   "aliases": [
+    "strawberries",
+    "strawberry",
+    "strawberrys"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Sugar Beet",
+   "key": "sugar beet",
+   "aliases": [
+    "beetroot",
+    "sugar beet",
+    "sugar beets"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Sugarcane",
+   "key": "sugarcane",
+   "aliases": [
+    "miwa",
+    "sugarcane",
+    "sugarcanes"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Sunflower",
+   "key": "sunflower",
+   "aliases": [
+    "alizeti",
+    "sunflower",
+    "sunflowers"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Sweet Potato",
+   "key": "sweet potato",
+   "aliases": [
+    "kiazi kitamu",
+    "sweet potato",
+    "sweet potatos",
+    "viazi vitamu"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Tamarind",
+   "key": "tamarind",
+   "aliases": [
+    "tamarind",
+    "tamarinds"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Tea",
+   "key": "tea",
+   "aliases": [
+    "chai",
+    "tea",
+    "teas"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Teff",
+   "key": "teff",
+   "aliases": [
+    "teff",
+    "teffs"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Tobacco",
+   "key": "tobacco",
+   "aliases": [
+    "tobacco",
+    "tobaccos"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Tomato",
+   "key": "tomato",
+   "aliases": [
+    "nyanya",
+    "tomato",
+    "tomatos"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Triticale",
+   "key": "triticale",
+   "aliases": [
+    "triticale",
+    "triticales"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Turmeric",
+   "key": "turmeric",
+   "aliases": [
+    "binzari",
+    "manjano",
+    "turmeric",
+    "turmerics"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Turnip",
+   "key": "turnip",
+   "aliases": [
+    "turnip",
+    "turnips"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Vanilla",
+   "key": "vanilla",
+   "aliases": [
+    "vanilla",
+    "vanillas"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Watermelon",
+   "key": "watermelon",
+   "aliases": [
+    "tikiti maji",
+    "tikitimaji",
+    "watermelon",
+    "watermelons"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Wheat",
+   "key": "wheat",
+   "aliases": [
+    "ngano",
+    "wheat",
+    "wheats"
+   ],
+   "in_suitability": true,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Wild Tomato",
+   "key": "wild tomato",
+   "aliases": [
+    "african eggplant",
+    "bitter tomato",
+    "nyanya chungu",
+    "wild tomato",
+    "wild tomatos"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  },
+  {
+   "name": "Yam",
+   "key": "yam",
+   "aliases": [
+    "viazi vikuu",
+    "yam",
+    "yams"
+   ],
+   "in_suitability": false,
+   "in_disease_library": true,
+   "rules_fallback": null
+  },
+  {
+   "name": "Zucchini",
+   "key": "zucchini",
+   "aliases": [
+    "zucchini",
+    "zucchinis"
+   ],
+   "in_suitability": true,
+   "in_disease_library": false,
+   "rules_fallback": "Generic"
+  }
+ ],
+ "coverage": {
+  "total": 134,
+  "in_both": 67,
+  "suitability_only": 31,
+  "disease_library_only": 34,
+  "neither": 2
+ }
+}

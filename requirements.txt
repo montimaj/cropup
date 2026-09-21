@@ -1,0 +1,38 @@
+# CropUp runtime dependencies.
+# Pinned to what is installed and verified in .venv (x86_64 under Rosetta,
+# Python 3.12.11).
+#
+# Deliberately absent, and must stay absent (SPEC 1.1):
+#   torch                  -- 2.2.2 is the ceiling here and it is broken against
+#                             NumPy 2.2.6; importing it crashes the process.
+#   transformers           -- pulls torch.
+#   sentence-transformers  -- pulls torch. NLU runs on onnxruntime + tokenizers.
+
+# Web
+fastapi==0.141.1
+starlette==1.6.0
+uvicorn==0.53.0
+pydantic==2.12.5
+python-multipart==0.0.32
+Jinja2==3.1.6
+
+# Earth Engine
+earthengine-api==1.7.19
+google-auth==2.40.3
+
+# NLU: ONNX inference only, no deep-learning framework
+onnxruntime==1.23.2
+tokenizers==0.23.2
+huggingface-hub==1.8.0
+
+# Data and matching
+numpy==2.2.6
+pandas==2.3.1
+rapidfuzz==3.14.6
+
+# HTTP clients (requests for HF/asset downloads, httpx for the test client)
+requests==2.32.4
+httpx==0.28.1
+
+# Testing (SPEC section 10). The FastAPI TestClient needs httpx, pinned above.
+pytest==9.0.2

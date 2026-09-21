@@ -216,3 +216,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Vendored reference material and raw personal data.
+# Anchored with a leading slash: core.ignorecase=true on macOS, so an unanchored
+# "Data/" also matched cropup/data/ and silently excluded every committed artifact.
+/Data/
+
+# macOS
+.DS_Store

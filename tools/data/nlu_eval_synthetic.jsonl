@@ -1,0 +1,98 @@
+{"id": "syn-001", "text": "can you tell me the state of my maize at kiru valley before i travel next week", "intent": "field_health_check", "lang": "en", "names_crop": true, "names_location": true}
+{"id": "syn-002", "text": "nataka kujua hali ya shamba langu la mpunga kwa sasa", "intent": "field_health_check", "lang": "sw", "names_crop": true, "names_location": false}
+{"id": "syn-003", "text": "the rains were poor in manyara this month, is my whole plot behind where it should be", "intent": "field_health_check", "lang": "en", "names_crop": false, "names_location": true}
+{"id": "syn-004", "text": "compare my farm now with how it looked at the start of the season", "intent": "field_health_check", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-005", "text": "anything the satellite can see on my four acres that i cannot see walking it", "intent": "field_health_check", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-006", "text": "half of my maize in the lower part of the shamba has yellow streaks running along the leaves", "intent": "crop_problem_diagnosis", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-007", "text": "the tomato fruits get a black sunken patch at the bottom before they ripen", "intent": "crop_problem_diagnosis", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-008", "text": "majani ya migomba yananyauka na kuna madoa ya kahawia", "intent": "crop_problem_diagnosis", "lang": "sw", "names_crop": true, "names_location": false}
+{"id": "syn-009", "text": "small insects under the leaves of my watermelon and the leaves are curling up", "intent": "crop_problem_diagnosis", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-010", "text": "my onions in mang'ola fall over and the base smells bad when i pull them", "intent": "crop_problem_diagnosis", "lang": "en", "names_crop": true, "names_location": true}
+{"id": "syn-011", "text": "something is boring into the maize stalk and there is sawdust outside the hole", "intent": "crop_problem_diagnosis", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-012", "text": "the pods of my beans have reddish sunken marks, is the crop still safe to eat", "intent": "crop_problem_diagnosis", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-013", "text": "young cabbage plants are cut at the soil line overnight", "intent": "crop_problem_diagnosis", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-014", "text": "we have not had rain for three weeks, should i start watering the vegetables or wait", "intent": "irrigation_advice", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-015", "text": "how long should the sprinkler run on a sandy plot", "intent": "irrigation_advice", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-016", "text": "je nimwagilie mahindi yangu leo au nisubiri mvua", "intent": "irrigation_advice", "lang": "sw", "names_crop": true, "names_location": false}
+{"id": "syn-017", "text": "my water pump is expensive to run, which days matter most for watering tomatoes", "intent": "irrigation_advice", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-018", "text": "is it better to water early morning or late evening in hot weather", "intent": "irrigation_advice", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-019", "text": "the river at kahe is low this season, how do i stretch the water i have across the plot", "intent": "irrigation_advice", "lang": "en", "names_crop": false, "names_location": true}
+{"id": "syn-020", "text": "i just bought two acres near mbeya, what would you plant there", "intent": "crop_selection", "lang": "en", "names_crop": false, "names_location": true}
+{"id": "syn-021", "text": "is my land good for passion fruit or should i stay with maize", "intent": "crop_selection", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-022", "text": "which crop can survive the dry side of my farm where nothing does well", "intent": "crop_selection", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-023", "text": "ninataka kulima zao linalofaa kwa udongo wa shamba langu huko dodoma", "intent": "crop_selection", "lang": "sw", "names_crop": false, "names_location": true}
+{"id": "syn-024", "text": "after two seasons of tomatoes what is worth planting on that same land here", "intent": "crop_selection", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-025", "text": "i have half a bag of urea left, is that enough for one acre of maize", "intent": "fertilizer_advice", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-026", "text": "the shop only has minjingu mazao, can i use it for beans", "intent": "fertilizer_advice", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-027", "text": "how many weeks after planting should i put the second fertiliser", "intent": "fertilizer_advice", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-028", "text": "nitumie mbolea gani kwa nyanya zangu", "intent": "fertilizer_advice", "lang": "sw", "names_crop": true, "names_location": false}
+{"id": "syn-029", "text": "does adding fertiliser help if the rain is late", "intent": "fertilizer_advice", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-030", "text": "what quantity of npk per plant for bananas", "intent": "fertilizer_advice", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-031", "text": "is it a waste to apply fertiliser on a weedy field", "intent": "fertilizer_advice", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-032", "text": "can i mix urea with water and spray it on the leaves", "intent": "fertilizer_advice", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-033", "text": "my neighbour puts fertiliser twice and i put it once, who is right for maize", "intent": "fertilizer_advice", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-034", "text": "which fertiliser for coffee at flowering here in mbozi", "intent": "fertilizer_advice", "lang": "en", "names_crop": true, "names_location": true}
+{"id": "syn-035", "text": "how much sulphate of ammonia for one acre of sugarcane in kilombero", "intent": "fertilizer_advice", "lang": "en", "names_crop": true, "names_location": true}
+{"id": "syn-036", "text": "is there a cheaper fertiliser that gives the same result as dap", "intent": "fertilizer_advice", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-037", "text": "should i apply fertiliser before or after weeding", "intent": "fertilizer_advice", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-038", "text": "the same field gives less every year, what am i doing wrong with the soil", "intent": "soil_fertility_management", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-039", "text": "i have a lot of cow dung, how do i use it well on the farm", "intent": "soil_fertility_management", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-040", "text": "what do i need to prepare before sending soil for testing", "intent": "soil_fertility_management", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-041", "text": "water stands on my field in kilosa after rain and takes days to go", "intent": "soil_fertility_management", "lang": "en", "names_crop": false, "names_location": true}
+{"id": "syn-042", "text": "udongo wangu ni mwekundu na mgumu sana, nifanye nini", "intent": "soil_fertility_management", "lang": "sw", "names_crop": false, "names_location": false}
+{"id": "syn-043", "text": "is burning crop residue bad for the soil", "intent": "soil_fertility_management", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-044", "text": "how long does it take compost to be ready to use", "intent": "soil_fertility_management", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-045", "text": "my land is on a slope and the topsoil washes away every season", "intent": "soil_fertility_management", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-046", "text": "can i plant on land near njombe that was under eucalyptus for ten years", "intent": "soil_fertility_management", "lang": "en", "names_crop": false, "names_location": true}
+{"id": "syn-047", "text": "which bean seed gives a good harvest in a short rain season in singida", "intent": "seed_variety_selection", "lang": "en", "names_crop": true, "names_location": true}
+{"id": "syn-048", "text": "the agrovet has three maize seeds, how do i choose between them", "intent": "seed_variety_selection", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-049", "text": "is it true that some maize seed resists fall armyworm", "intent": "seed_variety_selection", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-050", "text": "mbegu gani ya mpunga inafaa kwa eneo la mbarali", "intent": "seed_variety_selection", "lang": "sw", "names_crop": true, "names_location": true}
+{"id": "syn-051", "text": "my cassava cuttings from last year gave small tubers, should i buy new ones", "intent": "seed_variety_selection", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-052", "text": "which sunflower variety gives more oil", "intent": "seed_variety_selection", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-053", "text": "does certified seed really do better than what i keep from my own harvest", "intent": "seed_variety_selection", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-054", "text": "which tomato seed can stand the rain without splitting", "intent": "seed_variety_selection", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-055", "text": "how many seeds should i put in one hole for maize", "intent": "crop_management_practice", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-056", "text": "when do i remove the suckers on my banana stool", "intent": "crop_management_practice", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-057", "text": "my maize is at knee height, is it too late to weed", "intent": "crop_management_practice", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-058", "text": "how do i keep weevils out of stored beans without chemicals", "intent": "crop_management_practice", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-059", "text": "nipande mahindi lini msimu huu huko iringa", "intent": "crop_management_practice", "lang": "sw", "names_crop": true, "names_location": true}
+{"id": "syn-060", "text": "should i plant on ridges or on flat ground in a wet area", "intent": "crop_management_practice", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-061", "text": "how do i dry my maize properly before selling it", "intent": "crop_management_practice", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-062", "text": "is it okay to plant beans between my coffee trees", "intent": "crop_management_practice", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-063", "text": "how far apart should orange trees be planted in a dry area like same", "intent": "crop_management_practice", "lang": "en", "names_crop": true, "names_location": true}
+{"id": "syn-064", "text": "when do i harvest groundnuts so they do not sprout in the ground", "intent": "crop_management_practice", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-065", "text": "do i need to stake my tomatoes or can they lie on the ground", "intent": "crop_management_practice", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-066", "text": "how do i prepare a nursery bed for cabbage seedlings", "intent": "crop_management_practice", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-067", "text": "the maize has fallen over after the storm, should i lift it back up", "intent": "crop_management_practice", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-068", "text": "what price are farmers getting for beans in arusha right now", "intent": "market_and_inputs_supply", "lang": "en", "names_crop": true, "names_location": true}
+{"id": "syn-069", "text": "who buys avocado in bulk around njombe", "intent": "market_and_inputs_supply", "lang": "en", "names_crop": true, "names_location": true}
+{"id": "syn-070", "text": "i want to start a small shop selling inputs, what do i need", "intent": "market_and_inputs_supply", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-071", "text": "is there anywhere i can hire a tractor for ploughing", "intent": "market_and_inputs_supply", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-072", "text": "bei ya mbolea iko juu, kuna msaada wowote kwa wakulima", "intent": "market_and_inputs_supply", "lang": "sw", "names_crop": false, "names_location": false}
+{"id": "syn-073", "text": "can i pay for the seed after harvest instead of now", "intent": "market_and_inputs_supply", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-074", "text": "where do i take my milk if the buyer stops coming", "intent": "market_and_inputs_supply", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-075", "text": "how do i find a supplier of pesticide that is not fake", "intent": "market_and_inputs_supply", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-076", "text": "what documents do i need to export my sesame from mtwara", "intent": "market_and_inputs_supply", "lang": "en", "names_crop": true, "names_location": true}
+{"id": "syn-077", "text": "my cow gives less milk since the dry season started", "intent": "livestock_and_adjacent", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-078", "text": "how do i stop my chicks dying in the first two weeks", "intent": "livestock_and_adjacent", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-079", "text": "kuku wangu wanaharisha na hawali chakula", "intent": "livestock_and_adjacent", "lang": "sw", "names_crop": false, "names_location": false}
+{"id": "syn-080", "text": "can i feed maize stover to my cattle after harvest", "intent": "livestock_and_adjacent", "lang": "en", "names_crop": true, "names_location": false}
+{"id": "syn-081", "text": "how many bee hives can one acre support in tabora", "intent": "livestock_and_adjacent", "lang": "en", "names_crop": false, "names_location": true}
+{"id": "syn-082", "text": "my pigs keep scratching themselves against the wall", "intent": "livestock_and_adjacent", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-083", "text": "what do i do with a goat that has just given birth to twins", "intent": "livestock_and_adjacent", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-084", "text": "what does it mean when they say a variety is drought tolerant", "intent": "agronomy_concept_explainer", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-085", "text": "someone told me about zero tillage, what is it", "intent": "agronomy_concept_explainer", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-086", "text": "maana ya kilimo hai ni nini", "intent": "agronomy_concept_explainer", "lang": "sw", "names_crop": false, "names_location": false}
+{"id": "syn-087", "text": "what is the difference between a fungicide and an insecticide", "intent": "agronomy_concept_explainer", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-088", "text": "why do people say legumes feed the soil", "intent": "agronomy_concept_explainer", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-089", "text": "what is a soil ph number actually telling me", "intent": "agronomy_concept_explainer", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-090", "text": "explain what mulching does for a field", "intent": "agronomy_concept_explainer", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-091", "text": "good morning", "intent": "out_of_scope_or_unclear", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-092", "text": "shikamoo mzee", "intent": "out_of_scope_or_unclear", "lang": "sw", "names_crop": false, "names_location": false}
+{"id": "syn-093", "text": "are you a real person or a computer", "intent": "out_of_scope_or_unclear", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-094", "text": "i sent you a photo, did you get it", "intent": "out_of_scope_or_unclear", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-095", "text": "help", "intent": "out_of_scope_or_unclear", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-096", "text": "can you speak swahili", "intent": "out_of_scope_or_unclear", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-097", "text": "my phone battery dies very fast", "intent": "out_of_scope_or_unclear", "lang": "en", "names_crop": false, "names_location": false}
+{"id": "syn-098", "text": "nashukuru sana kwa msaada wenu", "intent": "out_of_scope_or_unclear", "lang": "sw", "names_crop": false, "names_location": false}
