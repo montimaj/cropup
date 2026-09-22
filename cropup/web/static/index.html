@@ -48,9 +48,13 @@
 <script src="/static/map-fallback.js" defer></script>
 <script src="/static/app.js" defer></script>
 </head>
-<body>
+<!-- data-mode is the whole density mechanism: "farmer" is calm, "evidence"
+     un-hides every .ev element. app.js sets it from ?evidence=1, then from
+     localStorage, then falls back to farmer. Nothing is removed by either
+     mode; see the .ev comment block at the top of style.css. -->
+<body data-mode="farmer">
 
-<a class="skip" href="#main">Skip to the main panels</a>
+<a class="skip" href="#main">Skip to your questions</a>
 
 <header class="topbar">
   <div class="topbar__row">
@@ -60,16 +64,30 @@
       </span>
       <span class="brand__text">
         <strong>CropUp</strong>
-        <small id="app-version">loading&hellip;</small>
+        <small id="app-version" class="ev">loading&hellip;</small>
       </span>
     </div>
     <div class="topbar__meta">
-      <span class="sessionchip" id="session-chip" title="This browser's session. The slot frame lives here.">no session</span>
-      <button type="button" class="btn btn--ghost btn--sm" id="btn-reset" title="Forget the slots and open a fresh session">Reset</button>
+      <span class="sessionchip ev" id="session-chip" title="What CropUp is keeping for you in this browser.">no session</span>
+      <button type="button" class="btn btn--ghost btn--sm modeswitch" id="mode-toggle"
+              aria-pressed="false" aria-label="Show the evidence behind every answer">
+        <span class="modeswitch__glyph" aria-hidden="true">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6">
+            <rect x="1.2" y="1.2" width="5.6" height="5.6" rx="1.2"/>
+            <rect x="9.2" y="1.2" width="5.6" height="5.6" rx="1.2"/>
+            <rect x="1.2" y="9.2" width="5.6" height="5.6" rx="1.2"/>
+            <rect x="9.2" y="9.2" width="5.6" height="5.6" rx="1.2"/>
+          </svg>
+        </span>
+        <span class="modeswitch__word">Evidence</span>
+      </button>
+      <button type="button" class="btn btn--ghost btn--sm" id="btn-reset" title="Forget everything and start a fresh session">Start over</button>
     </div>
   </div>
 
-  <!-- SPEC 9: the persistent capability strip. Fed by GET /api/capabilities. -->
+  <!-- SPEC 9: the persistent capability strip. Fed by GET /api/capabilities.
+       It is never .ev and never hidden: a farmer must be able to see what is
+       degraded without turning anything on. -->
   <div class="capstrip" id="capstrip" aria-live="polite">
     <button type="button" class="capstrip__toggle" id="capstrip-toggle" aria-expanded="false" aria-controls="capstrip-detail">
       <span class="capstrip__dot" id="capstrip-dot" aria-hidden="true"></span>
@@ -77,49 +95,94 @@
       <span class="capstrip__chev" aria-hidden="true">&#9662;</span>
     </button>
     <div class="capstrip__chips" id="capstrip-chips"></div>
+    <p class="capstrip__lost" id="capstrip-lost" hidden></p>
   </div>
   <div class="capdetail" id="capstrip-detail" hidden>
     <div class="capdetail__grid">
       <section>
-        <h2>What a farmer loses right now</h2>
+        <h2>What CropUp cannot do right now</h2>
         <ul id="cap-lost" class="plainlist"><li class="muted">nothing reported</li></ul>
       </section>
-      <section>
-        <h2>Not tested yet</h2>
-        <p class="muted small">Coverage cliffs are only answerable at a specific point. Confirm a field and these become real answers.</p>
+      <section class="ev">
+        <h2>Not checked at your field yet</h2>
+        <p class="muted small">Some things can only be checked once CropUp knows where your field is.</p>
         <ul id="cap-unknown" class="plainlist"></ul>
       </section>
     </div>
-    <h2>Every capability</h2>
-    <ul id="cap-all" class="caplist"></ul>
-    <p class="muted small" id="cap-stamp"></p>
+    <h2 class="ev">Everything CropUp checks, and whether it is working</h2>
+    <ul id="cap-all" class="caplist ev"></ul>
+    <p class="muted small ev" id="cap-stamp"></p>
+
+    <!-- For anyone reading policy.py against the screen: the plain words above,
+         mapped back to the terms SPEC uses. Evidence mode only. -->
+    <div class="glossary ev">
+      <h2>For reviewers</h2>
+      <p class="muted small" id="cap-summary-raw"></p>
+      <dl>
+        <dt>&ldquo;what CropUp knows so far&rdquo;</dt><dd>the slot frame (one SlotBag, SPEC 1.2)</dd>
+        <dt>&ldquo;measurement&rdquo;</dt><dd>leg</dd>
+        <dt>&ldquo;Before CropUp measures&rdquo;</dt><dd>the gate (SPEC 4.4)</dd>
+        <dt>&ldquo;how much land each measurement really reads&rdquo;</dt><dd>footprint</dd>
+        <dt>&ldquo;farming guides&rdquo;</dt><dd>the cited RAG knowledge base (SPEC 6)</dd>
+        <dt>&ldquo;how far around your pin&rdquo;</dt><dd>the buffer radius r in <code>ee.Geometry.Point(&hellip;).buffer(r)</code></dd>
+      </dl>
+      <p class="muted small">Leaflet 1.9.4 is loaded from cdnjs under Subresource Integrity; the page's
+        Content-Security-Policy allows no inline script and exactly two external origins.
+        If either half of Leaflet fails the integrity check, CropUp's own plan view draws the
+        same geometry to scale with no network at all.</p>
+    </div>
   </div>
 </header>
 
 <main id="main" class="layout">
 
-  <!-- ============ LEFT: the two panels over one slot bag ============ -->
+  <!-- ============ LEFT: the two views over one slot bag ============ -->
   <section class="panel panel--talk" aria-label="Ask and Form">
-    <div class="tabs" role="tablist" aria-label="Two views of one slot frame">
+    <div class="tabs" role="tablist" aria-label="Ask or fill in the form">
       <button type="button" role="tab" id="tab-ask" class="tab is-active" aria-selected="true" aria-controls="view-ask">Ask</button>
       <button type="button" role="tab" id="tab-form" class="tab" aria-selected="false" aria-controls="view-form">Form</button>
-      <span class="tabs__note">two views of one slot frame &mdash; switching keeps everything</span>
+      <span class="tabs__note" id="tabs-note">Your answers are kept when you switch.</span>
     </div>
 
     <!-- ---------- ASK ---------- -->
     <div class="view" id="view-ask" role="tabpanel" aria-labelledby="tab-ask">
+
+      <!-- The field row. Present on first paint, before any question, because
+           standing in the field and capturing GPS is the one thing that turns
+           an unanswerable field question into an answerable one. The subtitle
+           is load-bearing: a location is never required to get an answer. -->
+      <div class="fieldrow" id="fieldrow">
+        <div class="fieldrow__head">
+          <span class="fieldrow__pin" aria-hidden="true">
+            <svg viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M7 12.6S12 8.6 12 5.6A5 5 0 0 0 2 5.6c0 3 5 7 5 7Z"/>
+              <circle cx="7" cy="5.5" r="1.8"/>
+            </svg>
+          </span>
+          <span class="fieldrow__label" id="fieldrow-label">No field set</span>
+          <span class="fieldrow__sub" id="fieldrow-sub">Most questions don&rsquo;t need one.</span>
+        </div>
+        <div class="fieldrow__acts" id="fieldrow-acts">
+          <button type="button" class="btn btn--primary" id="btn-gps-main">Use my location</button>
+          <button type="button" class="btn btn--ghost" id="btn-pick-place">Pick a place</button>
+        </div>
+        <div class="fieldrow__bar" id="gps-bar" hidden><span></span></div>
+        <p class="fieldrow__note" id="gps-note" hidden></p>
+        <div class="fieldrow__choices" id="gps-choices" hidden></div>
+      </div>
+
       <div class="transcript" id="transcript" aria-live="polite" aria-relevant="additions"></div>
       <form class="composer" id="composer" autocomplete="off">
         <label class="visually-hidden" for="composer-input">Your question</label>
-        <textarea id="composer-input" rows="1" placeholder="Ask in plain English &mdash; &ldquo;how is my maize in Arusha doing this week?&rdquo;" maxlength="1000"></textarea>
+        <textarea id="composer-input" rows="1" placeholder="Ask a question, in English or Swahili &mdash; &ldquo;how is my maize doing?&rdquo;" maxlength="1000"></textarea>
         <button type="submit" class="btn btn--primary" id="composer-send">Send</button>
       </form>
-      <p class="composer__note">A message never starts a measurement. Earth Engine runs only after you confirm the field (SPEC&nbsp;4.4).</p>
+      <p class="composer__note ev">A message never starts a measurement. Earth Engine runs only after you confirm the field (SPEC&nbsp;4.4).</p>
     </div>
 
     <!-- ---------- FORM ---------- -->
     <div class="view" id="view-form" role="tabpanel" aria-labelledby="tab-form" hidden>
-      <p class="view__lede">Everything you set here locks the slot: the classifier may suggest, but it will not overwrite you.</p>
+      <p class="view__lede">Anything you fill in here is yours. CropUp may suggest things, but it will never change what you set.</p>
 
       <div class="field">
         <label for="form-intent">What do you want to know?</label>
@@ -144,9 +207,10 @@
         </div>
         <ul class="results" id="form-place-results" role="listbox" hidden></ul>
         <div class="row">
-          <button type="button" class="btn btn--ghost btn--sm" id="btn-gps">Use my phone's GPS</button>
-          <span class="hint" id="gps-note">or drop a pin on the map &rarr;</span>
+          <button type="button" class="btn btn--ghost btn--sm" id="btn-gps">Use my location</button>
+          <span class="hint" id="gps-note-form">or tap your field on the map</span>
         </div>
+        <div class="fieldrow__choices" id="gps-choices-form" hidden></div>
       </div>
 
       <div class="field">
@@ -157,33 +221,23 @@
         </div>
         <p class="hint">Press Enter to apply.</p>
       </div>
-
-      <div class="field">
-        <label for="form-radius">Field radius</label>
-        <div class="row row--radius">
-          <input type="range" id="form-radius" min="5" max="1000" step="5" value="15">
-          <output id="form-radius-out" class="mono">15 m</output>
-          <button type="button" class="btn btn--ghost btn--sm" id="btn-radius-apply">Apply</button>
-        </div>
-        <p class="hint">This is the buffer radius that goes into <code>ee.Geometry.Point(&hellip;).buffer(r)</code>. Some legs read a much wider footprint &mdash; the map says which.</p>
-      </div>
     </div>
 
-    <!-- ---------- THE ONE SLOT FRAME (under both views) ---------- -->
+    <!-- ---------- WHAT CROPUP KNOWS SO FAR (under both views) ---------- -->
     <div class="slotframe" id="slotframe">
       <div class="slotframe__head">
-        <h2>The slot frame</h2>
-        <span class="muted small">one bag, both views</span>
+        <h2>What CropUp knows so far</h2>
+        <span class="muted small ev">one slot bag, two views</span>
       </div>
       <ul class="slots" id="slots"></ul>
       <div class="slotframe__events" id="slot-events" hidden></div>
     </div>
   </section>
 
-  <!-- ============ RIGHT: the field, the gate, the run ============ -->
-  <aside class="panel panel--field" aria-label="The field and the Earth Engine gate">
+  <!-- ============ RIGHT: your field, the confirm step, the measurements ====== -->
+  <aside class="panel fieldcard" id="fieldcard" aria-label="Your field, and what CropUp would measure">
 
-    <h2 class="panel__title">The field</h2>
+    <h2 class="panel__title">Your field</h2>
     <div class="mapwrap">
       <div id="map" class="map" role="application" aria-label="Field location map"></div>
       <div class="mapbanner" id="map-banner" hidden></div>
@@ -191,35 +245,59 @@
     <div class="maptools">
       <button type="button" class="btn btn--ghost btn--sm" id="btn-map-mode">Plan view</button>
       <button type="button" class="btn btn--ghost btn--sm" id="btn-map-centre">Recentre</button>
+      <button type="button" class="btn btn--ghost btn--sm" id="btn-map-bigger" aria-pressed="false">Bigger map</button>
       <span class="hint" id="map-hint">Click the map to place the field.</span>
     </div>
 
-    <div class="request" id="request-block">
-      <h3>What Earth Engine would receive</h3>
-      <div id="request-rows" class="reqrows"></div>
-    </div>
+    <!-- One plain sentence about what the green circle means, and about any
+         reading whose footprint is far wider than the plot. Built client-side
+         from server values only (see buildFieldPlain in app.js). -->
+    <p class="fieldplain" id="field-plain" hidden></p>
 
-    <details class="foot" id="footprints-block">
-      <summary>Footprints <span class="muted small" id="footprints-count"></span></summary>
+    <details class="foot" id="footprints-block" data-ev-open>
+      <summary>How much land each measurement really reads <span class="muted small" id="footprints-count"></span></summary>
       <ul class="footlist" id="footprints"></ul>
     </details>
 
-    <!-- SPEC 4.4: the gate, as a deliberate act -->
+    <details class="foot" id="radius-block" data-ev-open>
+      <summary>Look wider or narrower</summary>
+      <label class="visually-hidden" for="form-radius">How far around your pin CropUp should look, in metres</label>
+      <div class="row row--radius">
+        <input type="range" id="form-radius" min="5" max="1000" step="5" value="15">
+        <output id="form-radius-out" class="mono">15 m</output>
+        <button type="button" class="btn btn--ghost btn--sm" id="btn-radius-apply">Apply</button>
+      </div>
+      <p class="hint">How far around your pin CropUp should look. Some satellites see a much wider area than this &mdash; those are the faint rings on the map.</p>
+    </details>
+
+    <details class="foot ev" id="workings-field" data-ev-open>
+      <summary>Exactly what will be sent to the satellites</summary>
+      <div class="request" id="request-block">
+        <div id="request-rows" class="reqrows"></div>
+      </div>
+      <p class="hint">The circle above is how far around your pin CropUp looks. Some measurements come from satellites with much coarser pictures, so they read a wider area than the circle &mdash; the map shows each one.</p>
+      <p class="hint ev">In the request: the buffer radius <code>r</code> in <code>ee.Geometry.Point(&hellip;).buffer(r)</code>; the wider reads are per-leg reduction footprints.</p>
+    </details>
+
+    <!-- SPEC 4.4: confirming the field is a deliberate act, and running the
+         measurement is a second one. Never .ev. -->
     <section class="gate" id="gate" aria-live="polite">
-      <h3>The gate</h3>
+      <h3 id="gate-title">Before CropUp measures</h3>
       <div id="gate-body"></div>
     </section>
 
     <section class="runpanel" id="runpanel" hidden aria-live="polite">
-      <h3>Run <span class="muted small" id="run-clock"></span></h3>
-      <ul class="legs" id="legs"></ul>
+      <h3>Measuring <span class="muted small ev" id="run-clock"></span></h3>
+      <p class="runsummary" id="run-summary" hidden></p>
+      <ul class="legs ev" id="legs"></ul>
       <p class="muted small" id="run-note"></p>
     </section>
   </aside>
 </main>
 
 <footer class="footer">
-  <p>Every measured number above is hoverable and carries its instrument, date and resolution; the request parameters beside the map carry their own reason instead. Anything not measured is named, never guessed. There is no generative model in this system: answers are deterministic templates over measured facts plus verbatim cited snippets.</p>
+  <p>Every number here can be checked &mdash; turn on Evidence at the top to see the instrument behind each one.</p>
+  <p class="ev">Every measured number above is hoverable and carries its instrument, date and resolution; the request parameters beside the map carry their own reason instead. Anything not measured is named, never guessed. There is no generative model in this system: answers are deterministic templates over measured facts plus verbatim cited snippets.</p>
 </footer>
 
 <div class="toasts" id="toasts" aria-live="assertive"></div>

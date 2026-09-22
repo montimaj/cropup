@@ -262,9 +262,12 @@ def earth_engine_capability(settings: Settings | None = None) -> Capability:
     """
     settings = settings or get_settings()
     state = bootstrap.ee_status()
+    # Farmer-facing: this string is rendered in the capability strip on first
+    # paint, with no gesture, so it carries no spec references and no internal
+    # vocabulary. The precise version lives in `detail` for the evidence layer.
     lost = (
-        "field health, irrigation, crop selection: the 4 of 12 intents that need "
-        "Earth Engine (SPEC 5.2). Knowledge answers are unaffected.",
+        "Checking your field from satellites: field health, watering advice and "
+        "which crop to plant. Questions answered from the farming guides still work.",
     )
     info: dict[str, Any] = dict(state)
     info["enabled"] = settings.ee_enabled

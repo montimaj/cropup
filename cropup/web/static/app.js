@@ -19,6 +19,13 @@
  *  4. HONEST DEGRADATION. The capability strip is always visible, every error
  *     envelope is shown with its remedy, and the map falls back to a local
  *     plan view rather than a grey box when the tiles or the CDN are gone.
+ *  5. CALM BY DEFAULT, EVIDENCE ON DEMAND. body[data-mode] is the only density
+ *     control: "farmer" hides every .ev element with one CSS rule, "evidence"
+ *     shows them. Nothing is ever removed from the DOM and no state can be lost
+ *     by flipping it. A CLAIM never carries .ev -- a measured number, a named
+ *     absence, a withheld value, a slot's state badge, a run failure, a
+ *     confirmation prompt, the capability strip. Only ELABORATION does: which
+ *     asset, which tier, which expression, which vertex count.
  */
 (function () {
   "use strict";
@@ -78,7 +85,12 @@
 
   var LEG_COLOURS = {
     vegetation: "#2f8f5b", thermal: "#c2622a", soil: "#8a6a3a",
-    water: "#2b6cb0", context: "#7a5aa8", suitability: "#0f8e8e", climate: "#a8577f"
+    water: "#2b6cb0", context: "#7a5aa8", suitability: "#0f8e8e", climate: "#a8577f",
+    // Not a measurement footprint: the amber ring for how sure the phone is.
+    // It is passed to both map engines as a synthetic footprint entry so that
+    // neither engine needs a new code path, and it is never added to the
+    // #footprints list, which is only ever real measurement footprints.
+    "your phone": "#8a5300"
   };
   var PALETTE = ["#2f8f5b", "#c2622a", "#2b6cb0", "#7a5aa8", "#8a6a3a", "#0f8e8e", "#a8577f"];
   function legColour(leg, i) { return LEG_COLOURS[leg] || PALETTE[i % PALETTE.length]; }
@@ -102,8 +114,15 @@
   ];
   var ROUTE_TEXT = {
     earth_engine: "measured from satellites — needs a confirmed field",
-    rag: "answered from the cited knowledge base — never touches Earth Engine",
+    rag: "answered from CropUp's farming guides, with every source shown — no satellite is contacted",
     clarify: "CropUp will ask you what you mean"
+  };
+  /* The same three routes in the two words that fit in a <option>. The raw
+   * route names survive in INTENTS and in the evidence hint. */
+  var ROUTE_WORD = {
+    earth_engine: "from satellites",
+    rag: "from the guides",
+    clarify: "CropUp will ask"
   };
 
   /* ================================================================
@@ -122,10 +141,18 @@
     run: { planned: [], byName: {}, active: false },
     mapMode: "auto",       // auto | plan
     map: null,
-    busy: false
+    busy: false,
+    openSlot: null,        // which slot chip is expanded (one at a time)
+    // One state machine for both GPS entry points, so they can never disagree.
+    gps: {
+      watchId: null, best: null, started: 0, denied: false, stage: "idle",
+      ctx: "row", timers: [], usable: false, retried: false,
+      accuracy_m: null, at: null, ring: null, warn: null
+    }
   };
 
   var STORE_KEY = "cropup.session.v1";
+  var MODE_KEY = "cropup.mode.v1";
 
   function saveSnapshot() {
     try {
@@ -141,6 +168,44 @@
   }
   function dropSnapshot() {
     try { localStorage.removeItem(STORE_KEY); } catch (e) { /* nothing to do */ }
+  }
+
+  /* ================================================================
+   * density: farmer by default, evidence on demand
+   *
+   * One class, one CSS rule, no re-render and no second page. Flipping it
+   * cannot lose state because nothing is re-parented and nothing is removed.
+   * ============================================================= */
+
+  function evidenceMode() { return document.body.dataset.mode === "evidence"; }
+
+  function setMode(mode, quiet) {
+    var ev = mode === "evidence";
+    document.body.dataset.mode = ev ? "evidence" : "farmer";
+    $("mode-toggle").setAttribute("aria-pressed", ev ? "true" : "false");
+    try { localStorage.setItem(MODE_KEY, ev ? "evidence" : "farmer"); } catch (e) { /* private mode */ }
+    if (!quiet) renderAll();
+    syncDisclosures();
+    // the column width changes under Leaflet, which does not notice on its own
+    if (S.map && S.map.invalidate) setTimeout(function () { S.map.invalidate(); }, 40);
+  }
+
+  /* Evidence mode opens every disclosure. Farmer mode leaves them exactly as
+   * the farmer left them -- one they opened stays open. */
+  function syncDisclosures() {
+    if (!evidenceMode()) return;
+    Array.prototype.forEach.call(document.querySelectorAll("details[data-ev-open]"), function (d) {
+      d.open = true;
+    });
+  }
+
+  function initialMode() {
+    try {
+      if (/(^|[?&])evidence=1(&|$)/.test(location.search)) return "evidence";
+    } catch (e) { /* no location object in the headless harness */ }
+    try {
+      return localStorage.getItem(MODE_KEY) === "evidence" ? "evidence" : "farmer";
+    } catch (e) { return "farmer"; }
   }
 
   /* ================================================================
@@ -410,6 +475,10 @@
       art.appendChild(s);
     });
 
+    /* The tag rows are elaboration; their COUNTS are a claim, so the counts go
+     * in the summary line where they are read without a tap, and only the rows
+     * themselves collapse. Every in-sentence missing/withheld segment and every
+     * .notmeasured block above stays fully visible either way. */
     var foot = el("div", { class: "answer__foot" });
     var any = false;
     var f1 = tagRow("measured", answer.facts_used, "tag--fact"); if (f1) { foot.appendChild(f1); any = true; }
@@ -422,11 +491,30 @@
         el("ol", { class: "cites" }, answer.citations.map(function (c) { return el("li", { text: c }); }))
       ]));
     }
-    if (answer.degradation && answer.degradation.summary) {
-      any = true;
-      foot.appendChild(el("div", { class: "small muted", text: answer.degradation.summary }));
+
+    var counted = [];
+    function countTerm(n, one, many) {
+      if (n) counted.push(n + " " + (n === 1 ? one : (many || one)));
     }
-    if (any) art.appendChild(foot);
+    countTerm((answer.citations || []).length, "source", "sources");
+    countTerm((answer.facts_used || []).length, "measured");
+    countTerm((answer.gaps_named || []).length, "named as missing");
+    countTerm((answer.not_measured || []).length, "never attempted");
+
+    var degraded = (answer.degradation && answer.degradation.summary) || null;
+    if (!counted.length) {
+      // Nothing to summarise, so no disclosure at all -- but a degradation
+      // notice is a claim and must not disappear with the empty wrapper.
+      if (degraded) art.appendChild(el("div", { class: "small muted", text: degraded }));
+      return art;
+    }
+    if (degraded) foot.appendChild(el("div", { class: "small muted", text: degraded }));
+    if (any || degraded) {
+      art.appendChild(el("details", { class: "answerfoot", "data-ev-open": "" }, [
+        el("summary", { text: counted.join(" · ") }),
+        foot
+      ]));
+    }
     return art;
   }
 
@@ -443,8 +531,8 @@
 
   function transcriptEmpty() {
     var box = el("div", { class: "empty" }, [
-      el("h3", { text: "Ask anything about your field" }),
-      el("p", { text: "Most questions are answered from the cited knowledge base and never touch a satellite. Questions about a specific field do, and those need a confirmed location and crop first." })
+      el("h3", { text: "What do you want to know?" }),
+      el("p", { text: "Most questions CropUp answers from its farming guides, and it shows you where every answer came from. If you ask about one particular field, CropUp will ask where that field is." })
     ]);
     var row = el("div");
     EXAMPLES.forEach(function (q) {
@@ -496,33 +584,73 @@
     return "suggested";
   }
 
+  /* The plain words for the four slots. The precise names survive in the
+   * evidence layer (the glossary in the capability panel) and in the code. */
+  var SLOT_WORDS = { intent: "Question", crop: "Crop", location: "Where", timeframe: "When" };
+  var SLOT_EMPTY_HINT = {
+    intent: "CropUp will work this out from your question.",
+    crop: "CropUp needs this before it can look at satellites.",
+    location: "CropUp needs this before it can look at satellites.",
+    timeframe: "optional"
+  };
+
   function renderSlots() {
     var host = $("slots");
     clear(host);
     var bag = S.bag || { slots: {} };
+    var slots = bag.slots || {};
+    var ev = evidenceMode();
+
+    var filled = SLOT_ORDER.filter(function (n) { return !!slots[n]; });
 
     SLOT_ORDER.forEach(function (name) {
-      var sv = (bag.slots || {})[name] || null;
+      var sv = slots[name] || null;
       var st = slotState(sv);
-      var li = el("li", { class: "slot slot--" + st });
 
-      var top = el("div", { class: "slot__top" }, [
-        el("span", { class: "slot__name", text: name }),
-        sv
-          ? el("span", { class: "slot__value", text: sv.label || sv.value })
-          : el("span", { class: "slot__value slot__value--empty", text: "not set" })
-      ]);
+      if (!sv) {
+        // #fieldrow is the location affordance, and the gate already names
+        // whatever is still needed, so an empty slot says nothing to a farmer.
+        // The per-slot hint survives as elaboration.
+        if (name === "location") return;
+        host.appendChild(el("li", { class: "slot slot--empty ev" }, [
+          el("div", { class: "slot__chip" }, [
+            el("span", { class: "slot__name", text: SLOT_WORDS[name] || name }),
+            el("span", { class: "slot__value slot__value--empty", text: "not set" })
+          ]),
+          el("div", { class: "small muted", text: SLOT_EMPTY_HINT[name] || "" })
+        ]));
+        return;
+      }
+
+      var li = el("li", { class: "slot slot--" + st });
+      var open = ev || S.openSlot === name;
+
+      // The state badge word rides on the chip's face, next to the four
+      // border/background treatments, so "suggested" vs "you set this" is
+      // legible before any tap.
       var badges = el("span", { class: "slot__badges" });
       if (st === "suggested") badges.appendChild(el("span", { class: "badge badge--suggested", text: "suggested" }));
       if (st === "locked") badges.appendChild(el("span", { class: "badge badge--locked", text: "you set this" }));
       if (st === "confirmed") badges.appendChild(el("span", { class: "badge badge--confirmed", text: "confirmed" }));
-      if (sv && sv.needs_confirmation) badges.appendChild(el("span", { class: "badge badge--needs", text: "needs confirming" }));
+      if (sv.needs_confirmation) badges.appendChild(el("span", { class: "badge badge--needs", text: "needs confirming" }));
       // SPEC 5.3: seven short gazetteer names are flagged ambiguous. Say so.
-      if (sv && sv.detail && sv.detail.ambiguous) badges.appendChild(el("span", { class: "badge badge--needs", text: "ambiguous name" }));
-      top.appendChild(badges);
-      li.appendChild(top);
+      if (sv.detail && sv.detail.ambiguous) badges.appendChild(el("span", { class: "badge badge--needs", text: "ambiguous name" }));
 
-      if (sv) {
+      var chip = el("button", {
+        class: "slot__chip", type: "button", "aria-expanded": open ? "true" : "false",
+        onclick: function () {
+          S.openSlot = (S.openSlot === name) ? null : name;
+          renderSlots();
+        }
+      }, [
+        el("span", { class: "slot__name", text: SLOT_WORDS[name] || name }),
+        el("span", { class: "slot__value", text: slotDisplay(name, sv) }),
+        badges
+      ]);
+      li.appendChild(chip);
+
+      if (open) {
+        var body = el("div", { class: "slot__body" });
         var bits = [];
         bits.push("from " + (sv.origin || "?"));
         if (sv.source) bits.push(sv.source);
@@ -532,13 +660,13 @@
         if (sv.detail && typeof sv.detail.lat === "number") {
           bits.push(num(sv.detail.lat, 4) + ", " + num(sv.detail.lon, 4));
         }
-        li.appendChild(el("div", { class: "slot__meta", text: bits.join(" · ") }));
-        if (sv.note) li.appendChild(el("div", { class: "small muted", text: sv.note }));
+        body.appendChild(el("div", { class: "slot__meta", text: bits.join(" · ") }));
+        if (sv.note) body.appendChild(el("div", { class: "small muted", text: sv.note }));
 
         if (sv.alternatives && sv.alternatives.length) {
           var alts = el("div", { class: "slot__alts" }, [el("span", { class: "muted small", text: "also matches:" })]);
           sv.alternatives.forEach(function (a) { alts.appendChild(el("span", { class: "tag", text: a })); });
-          li.appendChild(alts);
+          body.appendChild(alts);
         }
 
         var acts = el("div", { class: "slot__actions" });
@@ -550,13 +678,13 @@
         }
         if (sv.locked && !sv.confirmed) {
           acts.appendChild(el("button", {
-            class: "btn btn--ghost btn--sm", type: "button", text: "Let CropUp guess again",
+            class: "btn btn--ghost btn--sm", type: "button", text: "Let CropUp fill this in",
             onclick: function () { writeSlots({ unlock: [name] }, "unlocking " + name); }
           }));
         }
         if (sv.confirmed) {
           acts.appendChild(el("button", {
-            class: "btn btn--ghost btn--sm", type: "button", text: "Withdraw confirmation",
+            class: "btn btn--ghost btn--sm", type: "button", text: "Undo confirm",
             onclick: function () { postConfirm({ unconfirm: [name] }, "withdrawing " + name); }
           }));
         }
@@ -566,18 +694,16 @@
             onclick: function () { writeSlots({ clear: [name] }, "clearing " + name); }
           }));
         }
-        li.appendChild(acts);
-      } else {
-        li.appendChild(el("div", {
-          class: "small muted",
-          text: name === "intent" ? "CropUp will route your question itself, or pick one in the Form."
-              : name === "timeframe" ? "optional"
-              : "needed before any satellite runs"
-        }));
+        body.appendChild(acts);
+        li.appendChild(body);
       }
 
       host.appendChild(li);
     });
+
+    if (!filled.length) {
+      host.appendChild(el("li", { class: "slotframe__nothing", text: "nothing yet" }));
+    }
 
     renderSlotEvents();
   }
@@ -639,13 +765,51 @@
       $("capstrip-summary").textContent = "cannot reach /api/capabilities (" + (err.status || "network") + ") — status unknown";
       $("capstrip-dot").className = "capstrip__dot is-broken";
       clear($("capstrip-chips"));
+      $("capstrip-lost").hidden = true;
+      $("capstrip-lost").textContent = "";
     });
+  }
+
+  /* The ONE farmer-facing sentence about capability this file is allowed to
+   * build, and only when the server did not send `plain.headline` itself. It is
+   * a pure function of the booleans in caps.can -- no judgement, no ranking of
+   * its own, no text invented beyond this fixed table. An unrecognised `can`
+   * shape returns null and the caller falls back to caps.summary VERBATIM
+   * rather than guessing what the server meant.
+   *
+   * The right long-term home for this is capabilities.py::capability_report,
+   * as a `plain` key; this is the client's compatibility path for a server
+   * build that does not send one. */
+  function plainFallback(caps) {
+    var can = caps && caps.can;
+    if (!can) return null;
+    function ok(k) {
+      var e = can[k];
+      return (e && typeof e.ok === "boolean") ? e.ok : null;
+    }
+    var field = ok("run_field_analysis");
+    var know = ok("answer_from_knowledge");
+    var place = ok("resolve_a_place");
+    var crop = ok("resolve_a_crop");
+    var text = ok("understand_free_text");
+    if (field === null || know === null || place === null || crop === null || text === null) return null;
+    if (!field && !know) return "CropUp cannot measure fields or look things up right now.";
+    if (!know) return "CropUp cannot look things up in its farming guides right now.";
+    if (!field) return "Satellite measurements are not available right now. CropUp can still answer from its farming guides.";
+    if (!place) return "CropUp cannot look up place names right now. You can still use your location or tap the map.";
+    if (!crop) return "CropUp cannot look up crop names right now.";
+    if (!text) return "CropUp is reading questions by keywords only right now, so it may misunderstand. The form still works.";
+    return "Everything is working.";
   }
 
   function renderCapabilities() {
     var caps = S.caps;
     if (!caps) return;
-    $("capstrip-summary").textContent = caps.summary || "";
+    $("capstrip-summary").textContent =
+      (caps.plain && caps.plain.headline) || plainFallback(caps) || caps.summary || "";
+    // Nothing the server said is lost: caps.summary survives verbatim in the
+    // evidence block of the expanded panel.
+    $("cap-summary-raw").textContent = caps.summary || "";
     var counts = caps.counts || {};
     var dot = $("capstrip-dot");
     dot.className = "capstrip__dot" + (counts.unavailable ? " is-broken" : caps.degraded ? " is-degraded" : "");
@@ -655,8 +819,10 @@
     var can = caps.can || {};
     Object.keys(can).forEach(function (k) {
       var entry = can[k] || {};
+      // SPEC 9 asks the strip to show what is DEGRADED. A healthy chip is
+      // elaboration; a down chip is the claim, and never carries .ev.
       chips.appendChild(el("span", {
-        class: "capchip" + (entry.ok ? "" : " is-down"),
+        class: "capchip" + (entry.ok ? " ev" : " is-down"),
         title: entry.detail || "",
         tabindex: "0"
       }, [
@@ -664,6 +830,17 @@
         " " + titleise(k)
       ]));
     });
+
+    // The red case names the loss without a tap.
+    var lostLine = $("capstrip-lost");
+    var firstLoss = (caps.plain && caps.plain.detail) || (caps.lost && caps.lost[0]) || "";
+    if (counts.unavailable && firstLoss) {
+      lostLine.textContent = firstLoss;
+      lostLine.hidden = false;
+    } else {
+      lostLine.textContent = "";
+      lostLine.hidden = true;
+    }
 
     var lost = $("cap-lost");
     clear(lost);
@@ -709,6 +886,8 @@
         text: (report && report.reason) || "No location has been given yet, so there is nothing to send."
       }));
       $("footprints-block").hidden = true;
+      $("radius-block").hidden = true;
+      buildFieldPlain(null);
       if (S.map) S.map.render(report || { resolved: false }, LEG_COLOURS);
       return;
     }
@@ -729,7 +908,8 @@
 
     var fps = report.footprints || [];
     $("footprints-block").hidden = false;
-    $("footprints-count").textContent = "(" + fps.length + " — some are far wider than your plot)";
+    $("radius-block").hidden = false;
+    $("footprints-count").textContent = "(" + fps.length + " — some are far wider than your field)";
     var list = $("footprints");
     clear(list);
     fps.forEach(function (f, i) {
@@ -747,12 +927,94 @@
       ]));
     });
 
-    if (S.map) S.map.render(report, LEG_COLOURS);
+    buildFieldPlain(report);
+    if (S.map) S.map.render(mapReport(report), LEG_COLOURS);
+  }
+
+  /* One farmer-visible sentence about what the green circle is, and a second
+   * when some reading covers far more ground than the plot. Both are pure
+   * functions of values the server sent -- report.request.radius_m and the
+   * widest entry of report.footprints -- with no judgement and nothing
+   * invented. This and plainFallback() are the only two farmer-facing
+   * sentences this file builds. */
+  function buildFieldPlain(report) {
+    var p = $("field-plain");
+    if (!report || !report.resolved || !report.request) {
+      p.textContent = "";
+      p.hidden = true;
+      return;
+    }
+    var r = report.request.radius_m;
+    var txt = "The green circle is what CropUp will measure: " + metres(r) + " around your pin.";
+    var widest = null;
+    (report.footprints || []).forEach(function (f) {
+      if (typeof f.radius_m !== "number") return;
+      if (typeof r === "number" && f.radius_m <= r) return;
+      if (!widest || f.radius_m > widest.radius_m) widest = f;
+    });
+    if (widest) {
+      txt += " Some readings cover a much wider area — the widest is " +
+             widest.leg + ", about " + metres(widest.radius_m * 2) + " across.";
+    }
+    p.textContent = txt;
+    p.hidden = false;
+  }
+
+  /* How sure the phone was, drawn beside the plot. It is handed to the map as
+   * one more footprint entry rather than as a new kind of layer, so Leaflet and
+   * the plan view both draw it with the code they already have. It is never
+   * added to report.footprints itself: that list is measurement footprints. */
+  function mapReport(report) {
+    var acc = S.gps.ring;
+    var sv = (S.bag && S.bag.slots) ? S.bag.slots.location : null;
+    if (!report || !report.resolved) return report;
+    if (typeof acc !== "number" || !isFinite(acc) || acc <= 0) return report;
+    if (!sv || sv.origin !== "device_gps") return report;
+    var copy = {};
+    Object.keys(report).forEach(function (k) { copy[k] = report[k]; });
+    copy.footprints = [{
+      leg: "your phone", radius_m: acc, reason: "how sure your phone is"
+    }].concat(report.footprints || []);
+    return copy;
+  }
+
+  /* ================================================================
+   * the field card: shown when there is a field, or to a reviewer
+   * ============================================================= */
+
+  function shouldShowField() {
+    if (evidenceMode()) return true;                                // a reviewer always sees the machinery
+    if (S.field && S.field.resolved) return true;
+    if (S.bag && S.bag.slots && S.bag.slots.location) return true;  // an unresolved place must still be visible
+    if (S.intentMeta && S.intentMeta.route === "earth_engine") return true;
+    return false;
+  }
+
+  function renderFieldCard() {
+    var show = shouldShowField();
+    var card = $("fieldcard");
+    var was = card.hidden;
+    card.hidden = !show;
+    $("main").classList.toggle("layout--solo", !show);
+    if (was && show && S.map && S.map.invalidate) setTimeout(function () { S.map.invalidate(); }, 40);
   }
 
   /* ================================================================
    * the gate (SPEC 4.4)
    * ============================================================= */
+
+  /* The plain phrase for each slot the gate can still be waiting on. */
+  var MISSING_WORDS = {
+    location: "where the field is",
+    crop: "which crop",
+    intent: "what you want to know",
+    timeframe: "when"
+  };
+
+  function joinPlain(items) {
+    if (items.length <= 1) return items.join("");
+    return items.slice(0, -1).join(", ") + " and " + items[items.length - 1];
+  }
 
   function renderGate() {
     var host = $("gate-body");
@@ -765,13 +1027,15 @@
     var field = S.field;
     var kind = action.kind || "";
 
+    $("gate-title").textContent = (field && field.confirmed) ? "Ready to measure" : "Before CropUp measures";
+
     var route = S.intentMeta ? S.intentMeta.route : null;
     if (route === "rag") {
       gate.classList.add("is-open");
       host.appendChild(el("p", {
         class: "gate__why",
-        text: (S.intentMeta.label || S.intentMeta.name) + " is answered from the cited knowledge base. " +
-              "No satellite is contacted, so there is nothing to confirm and nothing to run."
+        text: "CropUp answers this from its farming guides and shows you every source. " +
+              "No satellite is contacted, so there is nothing to confirm."
       }));
       host.appendChild(el("p", {
         class: "small muted",
@@ -786,7 +1050,7 @@
         class: "gate__why",
         text: (field && field.reason) || "CropUp needs a location it can put on the map before it can measure anything."
       }));
-      host.appendChild(el("p", { class: "small muted", text: "Pick a place in the Form, drop a pin on the map, or use your phone's GPS." }));
+      host.appendChild(el("p", { class: "small muted", text: "Tap “Use my location”, pick a place, or tap your field on the map." }));
       return;
     }
 
@@ -795,38 +1059,72 @@
 
     if (missing.length) {
       gate.classList.add("is-shut");
-      host.appendChild(el("p", { class: "gate__why", text: "Still needed: " + missing.join(", ") + "." }));
+      host.appendChild(el("p", {
+        class: "gate__why",
+        text: "CropUp still needs: " + joinPlain(missing.map(function (m) {
+          return MISSING_WORDS[m] || m.replace(/_/g, " ");
+        })) + "."
+      }));
+    }
+
+    // How sure the phone was, carried forward from the capture into the one
+    // place it changes a decision: right above the button that endorses the
+    // field. Never .ev -- an imprecise pin is a claim, not a diagnostic.
+    if (typeof S.gps.warn === "number" && S.gps.warn > 50) {
+      var sv = (S.bag && S.bag.slots) ? S.bag.slots.location : null;
+      if (sv && sv.origin === "device_gps") {
+        host.appendChild(el("p", {
+          class: "gate__warn",
+          text: "Your phone is sure only to within ±" + accText(S.gps.warn) +
+                " — wider than most fields. Check the pin, and tap the map to move it if it is wrong."
+        }));
+      }
     }
 
     if (unconfirmed.length) {
       gate.classList.add("is-shut");
       host.appendChild(el("p", {
         class: "gate__why",
-        text: "Earth Engine never runs on a field you have not confirmed. Check these, then confirm."
+        text: "CropUp never measures a field you have not confirmed. Check these, then tap Yes."
       }));
       var ul = el("ul", { class: "gate__list" });
       unconfirmed.forEach(function (name) {
-        var sv = (S.bag && S.bag.slots) ? S.bag.slots[name] : null;
-        ul.appendChild(el("li", { text: name + ": " + (sv ? (sv.label || sv.value) : "not set") }));
+        var slot = (S.bag && S.bag.slots) ? S.bag.slots[name] : null;
+        ul.appendChild(el("li", {
+          text: (SLOT_WORDS[name] || name) + ": " + (slot ? (slot.label || slot.value) : "not set")
+        }));
       });
       if (field.request) {
+        // The polygon on the map, stated in words beside the polygon drawn.
         ul.appendChild(el("li", {
-          text: "geometry: " + num(field.request.lat, 5) + ", " + num(field.request.lon, 5) +
-                " buffered " + metres(field.request.radius_m)
+          text: "the spot: " + num(field.request.lat, 5) + ", " + num(field.request.lon, 5) +
+                ", and " + metres(field.request.radius_m) + " around it"
         }));
       }
       host.appendChild(ul);
+      host.appendChild(el("p", {
+        class: "gate__promise",
+        text: "Asking a question never uses a satellite. CropUp only looks at your field after you tap Yes."
+      }));
       host.appendChild(el("button", {
         class: "btn btn--primary btn--wide", type: "button",
-        text: "Confirm this field",
+        text: "Yes, this is my field",
         onclick: function () { postConfirm({ slots: unconfirmed }, "confirming the field"); }
       }));
     } else if (field.confirmed) {
       gate.classList.add("is-open");
-      host.appendChild(el("p", { class: "gate__why", text: "Confirmed. " + (action.prompt || "") }));
+      // The "satellites are down" branch below also renders action.prompt, and
+      // when the field is confirmed during an outage BOTH branches run -- which
+      // printed the same paragraph twice, the first copy prefixed "Confirmed.".
+      // Say only the status here and let that branch explain the outage.
+      var outageBelow = (kind === "clarify" && !awaiting.may_run);
+      host.appendChild(el("p", {
+        class: "gate__why",
+        text: outageBelow ? "This is your field." : ("Confirmed. " + (action.prompt || ""))
+      }));
       host.appendChild(el("div", { class: "gate__row" }, [
         el("button", {
-          class: "btn btn--ghost btn--sm", type: "button", text: "Withdraw confirmation",
+          class: "btn btn--ghost btn--sm", type: "button", text: "Undo confirm",
           onclick: function () { postConfirm({ unconfirm: ["location", "crop"] }, "withdrawing confirmation"); }
         }),
         el("button", {
@@ -839,22 +1137,31 @@
     if (kind === "clarify" && !awaiting.may_run && field.confirmed) {
       gate.className = "gate is-down";
       host.appendChild(el("p", { class: "gate__why", text: action.prompt || "CropUp cannot measure this field right now." }));
+      // This action no longer advertises options: policy.py used to attach
+      // ("answer_from_rag", "retry_later"), which nothing consumed and this
+      // page drew as tags that looked like choices and did nothing. The prompt
+      // now names what actually works instead. Other actions do carry real
+      // options, so the guard stays -- but anything shown here is a
+      // reviewer-facing note, never something the farmer is invited to pick.
       if (awaiting.options && awaiting.options.length) {
-        var opts = el("div", { class: "gate__row" }, [el("span", { class: "muted small", text: "what is still open:" })]);
-        awaiting.options.forEach(function (o) { opts.appendChild(el("span", { class: "tag", text: o.replace(/_/g, " ") })); });
-        host.appendChild(opts);
+        host.appendChild(el("p", {
+          class: "small muted ev",
+          text: "policy options on this action, none of which the app consumes yet: " +
+                awaiting.options.join(", ")
+        }));
       }
       host.appendChild(el("p", {
         class: "small muted",
-        text: "Your confirmation was still recorded, so the moment Earth Engine answers again this field is ready to run."
+        text: "Your confirmation was still recorded, so the moment the satellites answer again this field is ready to measure."
       }));
     }
 
-    // the Run button: offered only when the policy already said yes
+    // Measuring is a SECOND deliberate act. The two taps are never merged, and
+    // this button is offered only when the server already said may_run.
     var mayRun = !!awaiting.may_run;
     var runBtn = el("button", {
       class: "btn btn--primary btn--wide", type: "button",
-      text: S.run.active ? "Running…" : "Run the analysis on this field",
+      text: S.run.active ? "Measuring…" : "Look at my field now",
       disabled: !mayRun || S.run.active || S.busy,
       onclick: doRun
     });
@@ -862,13 +1169,13 @@
     if (!mayRun) {
       host.appendChild(el("p", {
         class: "small muted",
-        text: "Run stays off until the policy opens the gate. " + (action.reason || "")
+        text: "CropUp cannot measure yet: " + (action.reason || "")
       }));
     }
 
     if (action.checks && action.checks.length) {
-      var det = el("details", { class: "gate__checks" }, [
-        el("summary", { text: "the gate's own trace" }),
+      var det = el("details", { class: "gate__checks ev" }, [
+        el("summary", { text: "How CropUp decided" }),
         el("ul", {}, action.checks.map(function (c) { return el("li", { text: c }); }))
       ]);
       host.appendChild(det);
@@ -914,7 +1221,7 @@
       var d = JSON.parse(ev.data);
       S.run.active = false;
       $("run-clock").textContent = (d.analysis || "") + " · finished in " + num(d.elapsed_s, 1) + " s";
-      $("run-note").textContent = d.legs_ok + " of " + d.legs_total + " legs returned, " +
+      $("run-note").textContent = d.legs_ok + " of " + d.legs_total + " measurements returned, " +
         d.facts + " measured, " + d.gaps + " named as missing" + (d.degraded ? " (degraded)" : "") + ".";
       renderLegs();
       renderGate();
@@ -944,15 +1251,17 @@
     Object.keys(S.run.byName).forEach(function (n) { if (names.indexOf(n) === -1) names.push(n); });
     if (!names.length) {
       list.appendChild(el("li", { class: "is-planned" }, [el("span", { class: "l-detail", text: "waiting for the plan…" })]));
+      runSummary(0, 0);
       return;
     }
+    var failed = 0, partial = 0;
     names.forEach(function (name) {
       var done = S.run.byName[name];
       var cls = "is-planned", mark = "·";
       if (done) {
         if (done.ok && !done.gaps) { cls = "is-ok"; mark = "✓"; }
-        else if (done.ok || done.facts) { cls = "is-partial"; mark = "◑"; }
-        else { cls = "is-failed"; mark = "✕"; }
+        else if (done.ok || done.facts) { cls = "is-partial"; mark = "◑"; partial += 1; }
+        else { cls = "is-failed"; mark = "✕"; failed += 1; }
       }
       var detail = done
         ? num(done.elapsed_s, 1) + " s · " + done.facts + " measured, " + done.gaps + " missing" +
@@ -964,6 +1273,20 @@
         el("span", { class: "l-detail", text: detail })
       ]));
     });
+    runSummary(failed, partial);
+  }
+
+  /* The per-measurement table is elaboration. A measurement that FAILED is not:
+   * it is the difference between an answer and a partial one, so it gets a line
+   * of its own that never carries .ev. */
+  function runSummary(failed, partial) {
+    var box = $("run-summary");
+    var parts = [];
+    if (failed) parts.push(failed + (failed === 1 ? " measurement could" : " measurements could") + " not be read.");
+    if (partial) parts.push(partial + (partial === 1 ? " measurement" : " measurements") + " came back only in part.");
+    if (!parts.length) { box.textContent = ""; box.hidden = true; return; }
+    box.textContent = parts.join(" ");
+    box.hidden = false;
   }
 
   function doRun() {
@@ -972,14 +1295,14 @@
     S.run.active = true;
     S.run.byName = {};
     $("runpanel").hidden = false;
-    $("run-note").textContent = "asking the policy for the same verdict a chat turn gets…";
+    $("run-note").textContent = "Checking that it is safe to measure…";
     renderLegs();
     renderGate();
     var body = (S.bag && S.bag.intent) ? { intent: S.bag.intent } : {};
     api("/api/session/" + encodeURIComponent(S.sid) + "/run", "POST", body)
       .then(function (env) {
         applyEnvelope(env);
-        pushAnswer(env, env.ran_earth_engine ? null : "This answer did not reach Earth Engine.");
+        pushAnswer(env, env.ran_earth_engine ? null : "No satellite was read for this answer.");
         switchTab("ask");
       })
       .catch(function (err) {
@@ -1025,9 +1348,13 @@
     renderSlots();
     renderField();
     renderGate();
+    renderFieldRow();
+    renderFieldCard();
     syncFormFromBag();
     $("session-chip").textContent = S.sid ? "session " + S.sid.slice(0, 8) : "no session";
-    $("session-chip").title = S.sid ? "Session " + S.sid : "no session";
+    $("session-chip").title = "What CropUp is keeping for you in this browser." +
+      (S.sid ? " Session " + S.sid : "");
+    syncDisclosures();
   }
 
   function describeOutcomes(outcomes) {
@@ -1035,7 +1362,7 @@
     var notes = [];
     Object.keys(outcomes).forEach(function (slot) {
       if (outcomes[slot] === "refused_locked") {
-        notes.push("kept your " + slot + " and ignored what the classifier heard");
+        notes.push("kept your " + slot + " and ignored what it heard in your message");
       } else if (outcomes[slot] === "cleared") {
         notes.push("cleared " + slot);
       }
@@ -1074,8 +1401,8 @@
       i.score_kind + " " + num(i.score, 3),
       typeof i.confidence === "number" ? "confidence " + num(i.confidence, 3) : "confidence not scored at this tier"
     ];
-    var det = el("details", { class: "gate__checks" }, [
-      el("summary", { text: "how CropUp read that" }),
+    var det = el("details", { class: "gate__checks", "data-ev-open": "" }, [
+      el("summary", { text: "How CropUp read your question" }),
       el("p", { class: "small", text: bits.join(" · ") }),
       el("p", { class: "small muted", text: i.reason || "" })
     ]);
@@ -1084,6 +1411,7 @@
     }
     var last = $("transcript").lastElementChild;
     if (last) last.appendChild(det);
+    syncDisclosures();
   }
 
   function writeSlots(body, what) {
@@ -1093,7 +1421,7 @@
       .then(function (env) {
         applyEnvelope(env);
         var note = describeOutcomes(env.slot_outcomes);
-        if (note) toast({ title: "Slot frame", body: note, kind: "info" });
+        if (note) toast({ title: "What CropUp knows", body: note, kind: "info" });
         return refreshCapabilities();
       })
       .catch(function (err) {
@@ -1110,14 +1438,16 @@
       .then(function (env) {
         applyEnvelope(env);
         if (env.confirmed && env.confirmed.length) {
-          toast({ title: "Gate", body: "Confirmed: " + env.confirmed.join(", ") + ".", kind: "info" });
+          toast({ title: "Field confirmed", body: "Confirmed: " + env.confirmed.join(", ") + ".", kind: "info" });
         }
-        // Do not take "unconfirmed" on trust: read the bag that came back. As
-        // of this server build, POST /confirm with `unconfirm` withdraws the
-        // confirmation and then re-confirms the same slots in the same request,
-        // so the reported withdrawal does not survive. Saying "withdrawn" over
-        // a bag that still says confirmed would be exactly the silent
-        // fabrication this app refuses to do anywhere else.
+        // Do not take "unconfirmed" on trust: read the bag that came back.
+        // This guard was written against a server that withdrew a confirmation
+        // and re-granted it in the same request; that bug is fixed, so the
+        // check now passes and the happy path below is what runs. It is kept
+        // because reporting "withdrawn" over a bag that still says confirmed
+        // would be exactly the silent fabrication this app refuses everywhere
+        // else -- and this is the gate that decides whether a satellite looks
+        // at someone's field.
         if (body && body.unconfirm && body.unconfirm.length) {
           var stuck = body.unconfirm.filter(function (name) {
             var sv = env.bag && env.bag.slots && env.bag.slots[name];
@@ -1132,7 +1462,7 @@
               kind: "error"
             });
           } else {
-            toast({ title: "Gate", body: "Withdrawn: " + body.unconfirm.join(", ") + ".", kind: "info" });
+            toast({ title: "Confirmation undone", body: "Withdrawn: " + body.unconfirm.join(", ") + ".", kind: "info" });
           }
         }
         if (env.action && env.action.kind === "clarify") pushAnswer(env, null);
@@ -1163,7 +1493,10 @@
           .then(function (res) {
             clear(list);
             if (!res.results || !res.results.length) {
-              list.appendChild(el("li", {}, [el("div", { class: "r-empty", text: "Nothing in the committed vocabulary matches “" + q + "”." })]));
+              list.appendChild(el("li", {}, [el("div", { class: "r-empty" }, [
+                "CropUp does not know that name.",
+                el("span", { class: "ev", text: " (“" + q + "” is not in the committed vocabulary)" })
+              ])]));
             } else {
               res.results.forEach(function (r) { list.appendChild(renderRow(r, close)); });
             }
@@ -1185,7 +1518,7 @@
     clear(sel);
     sel.appendChild(el("option", { value: "", text: "— let CropUp decide from what I type —" }));
     INTENTS.forEach(function (i) {
-      sel.appendChild(el("option", { value: i.name, text: i.label + "  (" + i.route.replace("_", " ") + ")" }));
+      sel.appendChild(el("option", { value: i.name, text: i.label + "  (" + (ROUTE_WORD[i.route] || i.route) + ")" }));
     });
     sel.addEventListener("change", function () {
       var v = sel.value;
@@ -1236,12 +1569,28 @@
       });
     });
 
-    $("btn-gps").addEventListener("click", useGps);
+    $("btn-gps").addEventListener("click", function () { captureGps("form"); });
   }
 
   function intentRoute(name) {
     for (var i = 0; i < INTENTS.length; i++) if (INTENTS[i].name === name) return INTENTS[i].route;
     return "clarify";
+  }
+
+  /* The server sends the intent slot with label === value === the identifier
+   * ("field_health_check"), because on the wire the identifier IS the value.
+   * INTENTS already carries the friendly wording used in the Form dropdown, so
+   * the chip reads from there rather than printing snake_case at a farmer. */
+  function intentLabel(name) {
+    for (var i = 0; i < INTENTS.length; i++) if (INTENTS[i].name === name) return INTENTS[i].label;
+    return name ? String(name).replace(/_/g, " ") : "";
+  }
+
+  /* What a slot chip shows. Every slot but `intent` already arrives with a
+   * label written for a person. */
+  function slotDisplay(name, sv) {
+    if (name === "intent") return intentLabel(sv.value);
+    return sv.label || sv.value;
   }
 
   function syncFormFromBag() {
@@ -1261,26 +1610,403 @@
     }
   }
 
-  function useGps() {
-    var note = $("gps-note");
+  /* ================================================================
+   * GPS: one state machine, two entry points
+   *
+   * SPEC 1.2: of 78 real farmer questions, ZERO carried GPS and ~60 gave no
+   * location at all. The farmer standing in her field is exactly how the 12%
+   * that Earth Engine can answer becomes answerable -- so capture is prominent
+   * and effortless, and the row that offers it says in the same breath that
+   * most questions do not need it.
+   *
+   * Three rules this code keeps, because each one is a way to be wrong:
+   *   - never accept a fix silently. The accuracy the device reported travels
+   *     in the slot label, so it reaches the chip, the confirm list, the map
+   *     popup and the transcript rather than being forgotten at the button.
+   *   - never dead-end. Every failure branch ends with something to press.
+   *   - never offer a control that cannot work. Secure context and the
+   *     geolocation API are checked at RENDER time, not at tap time.
+   * ============================================================= */
+
+  var GPS_INSECURE =
+    "This page is not on a secure (https) link, so your phone will not share its location. " +
+    "Pick a place, or tap your field on the map.";
+  var GPS_NO_API =
+    "This browser cannot share a location. Pick a place, or tap your field on the map.";
+
+  function accText(m) {
+    if (typeof m !== "number" || !isFinite(m)) return "an unknown distance";
+    return m >= 1000 ? (m / 1000).toFixed(1) + " km" : Math.round(m) + " m";
+  }
+
+  function noteHosts() {
+    return S.gps.ctx === "form"
+      ? { note: $("gps-note-form"), choices: $("gps-choices-form") }
+      : { note: $("gps-note"), choices: $("gps-choices") };
+  }
+
+  /* One status line, written to both places, so the farmer sees the same words
+   * whichever tab she is on when the device answers. */
+  function setGpsNote(text, kind, evExtra) {
+    [$("gps-note"), $("gps-note-form")].forEach(function (node) {
+      if (!node) return;
+      clear(node);
+      node.appendChild(document.createTextNode(text || ""));
+      if (evExtra) node.appendChild(el("span", { class: "ev", text: " " + evExtra }));
+      node.className = node.id === "gps-note"
+        ? "fieldrow__note" + (kind === "warn" ? " is-warn" : "")
+        : "hint" + (kind === "warn" ? " is-warn" : "");
+      if (node.id === "gps-note") node.hidden = !text;
+    });
+  }
+
+  function showGpsChoices(specs) {
+    [$("gps-choices"), $("gps-choices-form")].forEach(function (host) {
+      if (!host) return;
+      clear(host);
+      host.hidden = !specs.length;
+    });
+    if (!specs.length) return;
+    var host = noteHosts().choices;
+    specs.forEach(function (spec) {
+      host.appendChild(el("button", {
+        class: "btn " + (spec.kind === "primary" ? "btn--primary" : "btn--ghost"),
+        type: "button", text: spec.text, onclick: spec.run
+      }));
+    });
+    host.hidden = false;
+  }
+
+  function goPickPlace() {
+    showGpsChoices([]);
+    switchTab("form");
+    $("form-place").focus();
+  }
+
+  function retryChoices() {
+    return [
+      { text: "Try again", kind: "primary", run: function () { captureGps(S.gps.ctx); } },
+      { text: "Pick a place", kind: "ghost", run: goPickPlace }
+    ];
+  }
+
+  function clearGpsTimers() {
+    S.gps.timers.forEach(function (t) { clearTimeout(t); });
+    S.gps.timers = [];
+  }
+
+  function stopWatch() {
+    clearGpsTimers();
+    if (S.gps.watchId !== null && navigator.geolocation && navigator.geolocation.clearWatch) {
+      try { navigator.geolocation.clearWatch(S.gps.watchId); } catch (e) { /* already gone */ }
+    }
+    S.gps.watchId = null;
+  }
+
+  function gpsBusy(on) {
+    $("gps-bar").hidden = !on;
+    renderFieldRow();
+    var form = $("btn-gps");
+    if (form) {
+      form.disabled = !!on;
+      form.textContent = on ? "Finding you…" : "Use my location";
+    }
+  }
+
+  function captureGps(ctx) {
+    if (S.gps.stage !== "idle") return;          // a second tap while running is a no-op
+    S.gps.ctx = ctx === "form" ? "form" : "row";
     if (!navigator.geolocation) {
-      note.textContent = "This browser has no geolocation API.";
+      setGpsNote(GPS_NO_API, "warn");
+      showGpsChoices([{ text: "Pick a place", kind: "primary", run: goPickPlace }]);
+      renderFieldRow();
       return;
     }
     if (!window.isSecureContext) {
-      note.textContent = "Geolocation needs https (or localhost). Drop a pin on the map instead.";
+      setGpsNote(GPS_INSECURE, "warn",
+        "navigator.geolocation requires a secure context (https or localhost); this origin is http.");
+      showGpsChoices([{ text: "Pick a place", kind: "primary", run: goPickPlace }]);
+      renderFieldRow();
       return;
     }
-    note.textContent = "asking the device…";
-    navigator.geolocation.getCurrentPosition(function (pos) {
-      note.textContent = "device said ±" + Math.round(pos.coords.accuracy) + " m";
-      writeSlots({
-        point: { lat: pos.coords.latitude, lon: pos.coords.longitude, label: "My location" },
-        origin: "device_gps"
-      }, "using device GPS");
-    }, function (err) {
-      note.textContent = "GPS refused or unavailable (" + err.message + "). Drop a pin instead.";
-    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 });
+    S.gps.stage = "asking";
+    S.gps.best = null;
+    S.gps.retried = false;
+    S.gps.started = Date.now();
+    // The permission dialog is never a surprise.
+    setGpsNote("Your phone will ask to share your location. Tap Allow.", "");
+    showGpsChoices([]);
+    gpsBusy(true);
+    startWatch({ enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+  }
+
+  /* A best-fix window, not one shot.
+   *   maximumAge: 0  -- the whole premise is that she walked to THIS field. A
+   *                     cached fix from her house is a silently wrong field.
+   *   timeout: 20000 -- a cold fix outdoors on a cheap Android is routinely 15s. */
+  function startWatch(opts) {
+    clearGpsTimers();
+    try {
+      S.gps.watchId = navigator.geolocation.watchPosition(onFix, onErr, opts);
+    } catch (e) {
+      onErr({ code: 2, message: (e && e.message) || String(e) });
+      return;
+    }
+    S.gps.stage = "finding";
+    S.gps.timers.push(setTimeout(function () {
+      if (S.gps.stage !== "finding") return;
+      setGpsNote(S.gps.best
+        ? "Getting a better fix — best so far ±" + accText(S.gps.best.coords.accuracy) + "."
+        : "Still looking for a satellite…", "");
+    }, 3000));
+    S.gps.timers.push(setTimeout(function () {
+      // An impatient farmer is never trapped waiting for a better fix.
+      if (S.gps.stage !== "finding" || !S.gps.best) return;
+      showGpsChoices([{ text: "Use this one", kind: "primary", run: function () { settleGps(); } }]);
+    }, 4000));
+    S.gps.timers.push(setTimeout(function () {
+      if (S.gps.stage === "finding" && S.gps.best) settleGps();
+    }, 10000));
+  }
+
+  function onFix(pos) {
+    if (S.gps.stage === "idle") return;
+    S.gps.stage = "finding";
+    var acc = pos && pos.coords ? pos.coords.accuracy : null;
+    var bestAcc = S.gps.best && S.gps.best.coords ? S.gps.best.coords.accuracy : null;
+    var better = !S.gps.best ||
+      (typeof acc === "number" && isFinite(acc) &&
+       (typeof bestAcc !== "number" || !isFinite(bestAcc) || acc < bestAcc));
+    if (better) S.gps.best = pos;
+    if (typeof acc === "number" && isFinite(acc) && acc <= 25) settleGps();
+  }
+
+  function onErr(err) {
+    if (S.gps.stage === "idle") return;
+    // A timeout with a fix already in hand is not an error.
+    if (S.gps.best) { settleGps(); return; }
+    stopWatch();
+    S.gps.stage = "idle";
+    gpsBusy(false);
+    var code = err && err.code;
+    if (code === 1) {
+      // Her choice, not a system failure: no toast, and CropUp never re-prompts.
+      S.gps.denied = true;
+      setGpsNote("Your phone did not share your location. You can pick a place, or tap your field on the map.", "warn");
+      showGpsChoices([{ text: "Pick a place", kind: "primary", run: goPickPlace }]);
+    } else if (code === 2) {
+      setGpsNote("Your phone could not find a satellite. This often happens indoors or under a metal roof.", "warn");
+      showGpsChoices(gpsRetryOrPick());
+    } else if (code === 3) {
+      setGpsNote("Your phone took too long to answer. This often happens indoors or under thick cloud.", "warn");
+      showGpsChoices(gpsRetryOrPick());
+    } else {
+      setGpsNote("CropUp could not get your location. Pick a place, or tap your field on the map.", "warn",
+        (err && err.message) ? "device said: " + err.message : null);
+      showGpsChoices(gpsRetryOrPick());
+    }
+    renderFieldRow();
+  }
+
+  function gpsRetryOrPick() {
+    if (S.gps.retried) return [{ text: "Pick a place", kind: "primary", run: goPickPlace }];
+    return [
+      {
+        text: "Try again", kind: "primary",
+        run: function () {
+          if (S.gps.stage !== "idle") return;
+          S.gps.retried = true;
+          S.gps.best = null;
+          S.gps.stage = "asking";
+          setGpsNote("Trying again — this one waits longer.", "");
+          showGpsChoices([]);
+          gpsBusy(true);
+          startWatch({ enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
+        }
+      },
+      { text: "Pick a place", kind: "ghost", run: goPickPlace }
+    ];
+  }
+
+  function settleGps() {
+    if (S.gps.stage === "idle") return;
+    var pos = S.gps.best;
+    stopWatch();
+    S.gps.stage = "idle";
+    gpsBusy(false);
+    showGpsChoices([]);
+
+    if (!pos || !pos.coords) {
+      setGpsNote("Your phone did not report a position. Pick a place, or tap your field on the map.", "warn");
+      showGpsChoices(gpsRetryOrPick());
+      renderFieldRow();
+      return;
+    }
+
+    // Rounded exactly as onPick() rounds a map tap, so a pin and a fix are the
+    // same kind of number.
+    var lat = Number(pos.coords.latitude.toFixed(6));
+    var lon = Number(pos.coords.longitude.toFixed(6));
+    var acc = pos.coords.accuracy;
+    var finite = typeof acc === "number" && isFinite(acc) && acc >= 0;
+
+    if (!finite || acc > 500) {
+      // Refusing a farmer standing in her own field would be worse than
+      // answering with the looseness named -- but the extra tap makes it a
+      // decision, and the label carries the looseness into the data.
+      setGpsNote(finite
+        ? "Your phone is only sure to within ±" + accText(acc) +
+          ". That is much bigger than a field, so CropUp will not call this your field unless you say so."
+        : "Your phone reported a position but not how accurate it is, so CropUp will not call this your field unless you say so.",
+        "warn");
+      showGpsChoices([
+        { text: "Try again (go outside if you can)", kind: "ghost", run: function () { captureGps(S.gps.ctx); } },
+        { text: "Pick a place", kind: "ghost", run: goPickPlace },
+        { text: "Use it anyway", kind: "ghost", run: function () { writeGps(lat, lon, acc, finite, true); } }
+      ]);
+      renderFieldRow();
+      return;
+    }
+
+    writeGps(lat, lon, acc, true, false);
+  }
+
+  function writeGps(lat, lon, acc, finite, rough) {
+    if (!S.sid) {
+      setGpsNote("CropUp has no session yet. Try again in a moment.", "warn");
+      showGpsChoices(gpsRetryOrPick());
+      return;
+    }
+    if (S.busy) {
+      setGpsNote("CropUp is busy with the last change. Try again in a moment.", "warn");
+      showGpsChoices(gpsRetryOrPick());
+      return;
+    }
+
+    var label = rough
+      ? "My location (rough, " + (finite ? "±" + accText(acc) : "accuracy unknown") + ")"
+      : "My field (±" + accText(acc) + ")";
+
+    S.gps.accuracy_m = finite ? acc : null;
+    S.gps.at = new Date().toISOString();
+    // The amber ring and the amber line above the confirm button both key off
+    // this: anything looser than 50 m is wider than most fields.
+    S.gps.warn = finite && acc > 50 ? acc : null;
+    S.gps.ring = finite && acc > 50 ? acc : null;
+
+    setGpsNote(finite && acc <= 50
+      ? "Your phone placed you to within ±" + accText(acc) + "."
+      : "Saved as “" + label + "”, with how sure your phone was written into the name.",
+      finite && acc <= 50 ? "" : "warn");
+    showGpsChoices([]);
+
+    // origin "device_gps" is in LOCKING_ORIGINS (cropup/dialog/slots.py), so
+    // this reads as "you set this", not as a guess.
+    writeSlots({
+      point: { lat: lat, lon: lon, label: label },
+      origin: "device_gps"
+    }, "using your location").then(function () {
+      // Did the write actually land? A 4xx/5xx is swallowed by writeSlots (it
+      // raises its own toast), and a refused_locked write returns 200 with the
+      // OLD value, so the only honest test is to read the bag that came back.
+      var sv = (S.bag && S.bag.slots) ? S.bag.slots.location : null;
+      var coordsMatch = !!(sv && sv.detail &&
+        Math.abs(sv.detail.lat - lat) < 1e-5 && Math.abs(sv.detail.lon - lon) < 1e-5);
+      var saved = !!sv && sv.origin === "device_gps" && (coordsMatch || sv.label === label);
+      if (!saved) {
+        S.gps.accuracy_m = null; S.gps.warn = null; S.gps.ring = null;
+        setGpsNote("CropUp could not save your location. Try again, or pick a place.", "warn");
+        showGpsChoices(gpsRetryOrPick());
+        renderAll();
+        return;
+      }
+      renderAll();
+      var card = $("fieldcard");
+      if (card && !card.hidden && card.scrollIntoView) {
+        card.scrollIntoView({ block: "start", behavior: "smooth" });
+      }
+    });
+  }
+
+  /* ================================================================
+   * the field row: what CropUp knows about where you are standing
+   * ============================================================= */
+
+  function coordText(lat, lon) {
+    return Math.abs(lat).toFixed(4) + "°" + (lat < 0 ? "S" : "N") + ", " +
+           Math.abs(lon).toFixed(4) + "°" + (lon < 0 ? "W" : "E");
+  }
+
+  function renderFieldRow() {
+    var sv = (S.bag && S.bag.slots) ? S.bag.slots.location : null;
+    var label = $("fieldrow-label");
+    var sub = $("fieldrow-sub");
+    var gpsBtn = $("btn-gps-main");
+    var pick = $("btn-pick-place");
+    var running = S.gps.stage !== "idle";
+
+    clear(sub);
+
+    if (!sv) {
+      label.textContent = "No field set";
+      // Load-bearing: prominence must never imply a location is required. The
+      // common case in the corpus is a farmer with no location at all.
+      sub.appendChild(document.createTextNode("Most questions don’t need one."));
+      pick.hidden = false;
+    } else {
+      label.textContent = sv.label || sv.value;
+      var d = sv.detail || {};
+      var fromGps = sv.origin === "device_gps";
+      if (typeof d.lat === "number" && typeof d.lon === "number") {
+        // SPEC 9: a number a farmer can read is a number she can interrogate.
+        // Neither of these is a measurement of the field, and diagnosticCard's
+        // own header says so ("about the system, not the field").
+        sub.appendChild(hoverable("seg--diag", coordText(d.lat, d.lon),
+          diagnosticCard(fromGps ? {
+            quantity: "position from your phone",
+            source: "your phone's location sensor",
+            taken: shortTime(S.gps.at),
+            accuracy: typeof S.gps.accuracy_m === "number"
+              ? "±" + Math.round(S.gps.accuracy_m) + " m as reported by the device"
+              : "not reported by the device",
+            note: "Your phone reported this. CropUp did not measure it."
+          } : {
+            quantity: "where CropUp will look",
+            source: sv.source || "not stated",
+            set_by: sv.origin || "not stated",
+            note: "This is where the field is, not a measurement of it."
+          }),
+          fromGps ? "position reported by your phone" : "where CropUp will look"));
+      }
+      if (fromGps && typeof S.gps.accuracy_m === "number") {
+        sub.appendChild(document.createTextNode(" "));
+        sub.appendChild(hoverable("seg--diag", "±" + Math.round(S.gps.accuracy_m) + " m",
+          diagnosticCard({
+            quantity: "how sure your phone is",
+            source: "your phone's location sensor",
+            taken: shortTime(S.gps.at),
+            reported: "±" + Math.round(S.gps.accuracy_m) + " m",
+            note: "This is the device's own estimate of its error, not something CropUp measured."
+          }), "how sure your phone is, plus or minus " + Math.round(S.gps.accuracy_m) + " metres"));
+      }
+      pick.hidden = true;
+    }
+
+    if (running) {
+      gpsBtn.textContent = "Finding you…";
+      gpsBtn.disabled = true;
+      gpsBtn.className = "btn btn--ghost";
+      pick.disabled = false;
+      return;
+    }
+
+    gpsBtn.disabled = !S.gps.usable;
+    gpsBtn.textContent = sv ? "Change" : "Use my location";
+    // A permission can be re-granted, so a denial dims the button but never
+    // disables it: a disabled control with no route back is its own dead end.
+    var primary = S.gps.usable && !S.gps.denied && !sv;
+    gpsBtn.className = "btn " + (primary ? "btn--primary" : "btn--ghost");
+    pick.className = "btn " + (!primary && !sv ? "btn--primary" : "btn--ghost");
   }
 
   /* ================================================================
@@ -1436,8 +2162,12 @@
    * tabs
    * ============================================================= */
 
+  var tabNoteTimer = null;
+
   function switchTab(which) {
     var ask = which === "ask";
+    var wasAsk = $("tab-ask").classList.contains("is-active");
+    if (wasAsk !== ask) flashTabNote();
     $("tab-ask").classList.toggle("is-active", ask);
     $("tab-form").classList.toggle("is-active", !ask);
     $("tab-ask").setAttribute("aria-selected", ask ? "true" : "false");
@@ -1445,6 +2175,17 @@
     $("view-ask").hidden = !ask;
     $("view-form").hidden = ask;
     if (!ask) syncFormFromBag();
+  }
+
+  /* Below 480px the note is out of the way; it appears for four seconds the
+   * first time a switch actually happens, which is when it answers a question
+   * the farmer is about to ask. */
+  function flashTabNote() {
+    var node = $("tabs-note");
+    if (!node) return;
+    node.classList.add("is-flash");
+    clearTimeout(tabNoteTimer);
+    tabNoteTimer = setTimeout(function () { node.classList.remove("is-flash"); }, 4000);
   }
 
   /* ================================================================
@@ -1507,13 +2248,54 @@
     $("transcript").appendChild(transcriptEmpty());
   }
 
+  /* Offering a button that cannot work is the same defect as advertising an
+   * option nothing consumes, so this runs at wire() time, not at tap time.
+   * localhost IS a secure context, so the offline demo exercises the real path. */
+  function checkGpsUsable() {
+    S.gps.usable = !!(navigator.geolocation) && !!window.isSecureContext;
+    if (!S.gps.usable) {
+      if (!navigator.geolocation) setGpsNote(GPS_NO_API, "warn");
+      else setGpsNote(GPS_INSECURE, "warn",
+        "navigator.geolocation requires a secure context (https or localhost); this origin is http.");
+    }
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: "geolocation" }).then(function (status) {
+          if (!status || status.state !== "denied") return;
+          S.gps.denied = true;
+          setGpsNote("Your phone is set to block location for this site. You can change that in your " +
+                     "browser settings — or just pick a place instead.", "warn");
+          renderFieldRow();
+        }).catch(function () { /* the query itself is optional */ });
+      }
+    } catch (e) { /* Safari throws on an unsupported descriptor */ }
+    renderFieldRow();
+  }
+
   /* ================================================================
    * wiring
    * ============================================================= */
 
   function wire() {
+    setMode(initialMode(), true);
+    $("mode-toggle").addEventListener("click", function () {
+      setMode(evidenceMode() ? "farmer" : "evidence");
+    });
+    document.addEventListener("keydown", function (ev) {
+      if (!ev.altKey || ev.ctrlKey || ev.metaKey) return;
+      if (String(ev.key).toLowerCase() !== "e") return;
+      // never intercept typing
+      var a = document.activeElement;
+      if (a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT" || a.tagName === "SELECT" || a.isContentEditable)) return;
+      ev.preventDefault();
+      setMode(evidenceMode() ? "farmer" : "evidence");
+    });
+
     $("tab-ask").addEventListener("click", function () { switchTab("ask"); });
     $("tab-form").addEventListener("click", function () { switchTab("form"); });
+
+    $("btn-gps-main").addEventListener("click", function () { captureGps("row"); });
+    $("btn-pick-place").addEventListener("click", goPickPlace);
 
     $("composer").addEventListener("submit", function (ev) {
       ev.preventDefault();
@@ -1541,6 +2323,12 @@
       mountMap(S.mapMode === "plan" ? "leaflet" : "plan");
     });
     $("btn-map-centre").addEventListener("click", function () { if (S.map) S.map.recentre(); });
+    $("btn-map-bigger").addEventListener("click", function () {
+      var big = $("map").classList.toggle("is-big");
+      $("btn-map-bigger").setAttribute("aria-pressed", big ? "true" : "false");
+      $("btn-map-bigger").textContent = big ? "Smaller map" : "Bigger map";
+      if (S.map && S.map.invalidate) setTimeout(function () { S.map.invalidate(); }, 40);
+    });
 
     $("btn-reset").addEventListener("click", function () {
       dropSnapshot();
@@ -1563,6 +2351,9 @@
     buildForm();
     mountMap("auto");
     switchTab("ask");
+    checkGpsUsable();
+    renderFieldCard();
+    syncDisclosures();
   }
 
   function start() {
@@ -1588,6 +2379,15 @@
     renderGate: renderGate,
     renderCapabilities: renderCapabilities,
     renderLegs: renderLegs,
+    renderFieldRow: renderFieldRow,
+    renderFieldCard: renderFieldCard,
+    shouldShowField: shouldShowField,
+    setMode: setMode,
+    plainFallback: plainFallback,
+    buildFieldPlain: buildFieldPlain,
+    mapReport: mapReport,
+    captureGps: captureGps,
+    accText: accText,
     applyEnvelope: applyEnvelope,
     describeOutcomes: describeOutcomes,
     slotState: slotState,

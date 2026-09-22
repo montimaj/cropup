@@ -43,8 +43,21 @@ def test_the_honesty_endpoint_answers_200_during_the_outage(client):
     payload = response.json()
     assert payload["degraded"] is True
     assert payload["summary"]
-    blob = str(payload).lower()
-    assert "earth engine" in blob
+    # The substance, rather than one vendor name: the outage is reported as a
+    # capability that is not ok, and what the farmer loses by it is NAMED.
+    # (This used to match the literal phrase "earth engine", which broke the
+    # moment that farmer-facing string was written in plain language.)
+    caps = payload["can"]
+    assert caps["run_field_analysis"]["ok"] is False
+    assert caps["run_field_analysis"]["detail"]
+    assert payload["lost"], "an outage must name what it costs the farmer"
+
+    # And the naming must stay farmer-readable. These strings render in the
+    # capability strip on first paint with no gesture, so a spec citation or an
+    # internal identifier reaching them is a regression.
+    farmer_text = " ".join(payload["lost"]).lower()
+    for leak in ("spec ", "_", "earth engine", "intent", "ledger"):
+        assert leak not in farmer_text, f"internal vocabulary on first paint: {leak!r}"
 
 
 def test_the_capability_report_never_leaks_the_operators_paths(client):
@@ -77,7 +90,14 @@ def test_an_earth_engine_question_is_declined_with_a_reason_not_a_guess(client):
     assert response.status_code == 503
     error = response.json()["error"]
     assert error["type"] == "EarthEngineUnavailable"
-    assert "cannot measure this field" in error["message"]
+    # The property, not the sentence: the decline says the measurement could not
+    # happen, and points at what still works, instead of producing a number.
+    message = error["message"].lower()
+    assert any(w in message for w in ("cannot", "could not", "not available")), message
+    assert any(w in message for w in ("satellite", "measure")), message
+    assert any(w in message for w in ("guide", "knowledge", "ask")), (
+        "a decline must name what the farmer can still do"
+    )
     assert response.json()["ran_earth_engine"] is False
     # It says where to look and what still works, rather than offering a number.
     assert "/api/capabilities" in (error["remedy"] or "")

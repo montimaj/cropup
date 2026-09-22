@@ -414,11 +414,16 @@ def next_action(frame: Frame) -> Action:
             kind=ACTION_CLARIFY,
             intent=intent.name,
             prompt=(
-                "Earth Engine is unavailable right now, so I cannot measure this field. "
-                "I can answer from the cited knowledge base instead, or you can try again later."
+                "I cannot check your field from the satellites right now. "
+                "You can still ask me about treatment, planting or soil care and "
+                "I will answer from the farming guides, with the source shown."
             ),
             reason="the field is confirmed but the measurement layer is down",
-            options=("answer_from_rag", "retry_later"),
+            # No `options` here. This used to advertise ("answer_from_rag",
+            # "retry_later"), which nothing consumed and the page drew as inert
+            # tags -- an offer the farmer could not accept. Asking a knowledge
+            # question is a plain message turn and already works, so the prompt
+            # now names the thing that is actually available instead.
             checks=tuple(checks),
         )
 
